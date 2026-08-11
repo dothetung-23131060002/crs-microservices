@@ -1,15 +1,17 @@
 // path: course-service/src/main/java/vn/edu/crs/courseservice/controller/CourseController.java
-// purpose: controller CRUD that cho Course, thay the ban mockup cua Buoi 1
+// purpose: giu nguyen POST/PUT/DELETE/GET-by-id cua Buoi 2, THAY THE rieng phuong thuc
+//          getAll() cu bang phuong thuc search() moi ben duoi (ho tro keyword+page+size+sort)
+
 package vn.edu.crs.courseservice.controller;
 
 import vn.edu.crs.courseservice.dto.CourseDTO;
 import vn.edu.crs.courseservice.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/courses")
@@ -18,9 +20,13 @@ public class CourseController {
 
     private final CourseService courseService;
 
+    // Buoi 3: thay the getAll() cu (tra List<CourseDTO>) bang search() moi (tra Page<CourseDTO>)
+    // Vi du: GET /courses?keyword=java&page=0&size=5&sort=tenMonHoc,asc
     @GetMapping
-    public List<CourseDTO> getAll() {
-        return courseService.getAll();
+    public Page<CourseDTO> search(
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        return courseService.search(keyword, pageable);
     }
 
     @GetMapping("/{id}")
@@ -40,7 +46,6 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         courseService.delete(id);
     }
