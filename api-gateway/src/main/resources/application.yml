@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/(?<segment>.*), /auth/$\{segment}
+
+        - id: course-service-list
+          uri: ${COURSE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/courses
+          filters:
+            - RewritePath=/api/courses, /courses
+
+        - id: course-service-detail
+          uri: ${COURSE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/courses/**
+          filters:
+            - RewritePath=/api/courses/(?<segment>.*), /courses/$\{segment}
+
+        - id: registration-service-list
+          uri: ${REGISTRATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/registrations
+          filters:
+            - RewritePath=/api/registrations, /registrations
+
+        - id: registration-service-detail
+          uri: ${REGISTRATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/registrations/**
+          filters:
+            - RewritePath=/api/registrations/(?<segment>.*), /registrations/$\{segment}
+
+        - id: course-service-partner
+          uri: ${COURSE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/public/courses
+          filters:
+            - RewritePath=/api/public/courses, /courses
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - http://localhost:5173
+            allowedMethods: '*'
+            allowedHeaders: '*'
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:CRS-Microservices-Secret-Key-Nam-3-Hoc-Ky-2026-Doi-Trong-Thuc-Te}
+
+partner:
+  api-key: ${PARTNER_API_KEY:crs-partner-key-2026}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
