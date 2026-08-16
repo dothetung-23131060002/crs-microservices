@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "CRS Microservices - Gateway",
+    "description": "End-to-end checks for Buoi 4. Run requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "partnerApiKey", "value": "crs-partner-key-2026" },
+    { "key": "adminToken", "value": "" },
+    { "key": "studentToken", "value": "" },
+    { "key": "createdCourseId", "value": "" },
+    { "key": "createdRegistrationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Login admin",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+          "const body = pm.response.json();",
+          "pm.expect(body.role).to.eql('ADMIN');",
+          "pm.collectionVariables.set('adminToken', body.token);"
+        ] }
+      }]
+    },
+    {
+      "name": "02 - Login student",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"student123\"\n}" },
+        "url": "{{baseUrl}}/api/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+          "const body = pm.response.json();",
+          "pm.expect(body.role).to.eql('STUDENT');",
+          "pm.collectionVariables.set('studentToken', body.token);"
+        ] }
+      }]
+    },
+    {
+      "name": "03 - Public course list",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/courses?page=0&size=10&sort=tenMonHoc,asc" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"] } }]
+    },
+    {
+      "name": "04 - Gateway rejects missing Authorization",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"tenMonHoc\": \"No Auth {{$timestamp}}\",\n  \"soTinChi\": 3,\n  \"soChoToiDa\": 30\n}" },
+        "url": "{{baseUrl}}/api/courses"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 401', () => pm.response.to.have.status(401));"] } }]
+    },
+    {
+      "name": "05 - Course service rejects STUDENT write",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"tenMonHoc\": \"Student Forbidden {{$timestamp}}\",\n  \"soTinChi\": 3,\n  \"soChoToiDa\": 30\n}" },
+        "url": "{{baseUrl}}/api/courses"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 403', () => pm.response.to.have.status(403));"] } }]
+    },
+    {
+      "name": "06 - ADMIN creates course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"tenMonHoc\": \"Kien truc phan mem {{$guid}}\",\n  \"soTinChi\": 3,\n  \"soChoToiDa\": 1\n}" },
+        "url": "{{baseUrl}}/api/courses"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+          "const body = pm.response.json();",
+          "pm.expect(body.soChoConLai).to.eql(1);",
+          "pm.collectionVariables.set('createdCourseId', body.id);"
+        ] }
+      }]
+    },
+    {
+      "name": "07 - STUDENT registers course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"studentId\": 1,\n  \"courseId\": {{createdCourseId}}\n}" },
+        "url": "{{baseUrl}}/api/registrations"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+          "const body = pm.response.json();",
+          "pm.expect(body.trangThai).to.eql('DA_DANG_KY');",
+          "pm.collectionVariables.set('createdRegistrationId', body.id);"
+        ] }
+      }]
+    },
+    {
+      "name": "08 - Seat was reserved",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/courses/{{createdCourseId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+        "pm.expect(pm.response.json().soChoConLai).to.eql(0);"
+      ] } }]
+    },
+    {
+      "name": "09 - Duplicate registration is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"studentId\": 1,\n  \"courseId\": {{createdCourseId}}\n}" },
+        "url": "{{baseUrl}}/api/registrations"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 409', () => pm.response.to.have.status(409));"] } }]
+    },
+    {
+      "name": "10 - Sold-out course is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"studentId\": 2,\n  \"courseId\": {{createdCourseId}}\n}" },
+        "url": "{{baseUrl}}/api/registrations"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 409', () => pm.response.to.have.status(409));"] } }]
+    },
+    {
+      "name": "11 - Invalid JWT is rejected by registration-service",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer invalid.jwt.token", "type": "text" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"studentId\": 2,\n  \"courseId\": {{createdCourseId}}\n}" },
+        "url": "{{baseUrl}}/api/registrations"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 401', () => pm.response.to.have.status(401));"] } }]
+    },
+    {
+      "name": "12 - STUDENT cancels registration",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }],
+        "url": "{{baseUrl}}/api/registrations/{{createdRegistrationId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"] } }]
+    },
+    {
+      "name": "13 - Seat was released",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/courses/{{createdCourseId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+        "pm.expect(pm.response.json().soChoConLai).to.eql(1);"
+      ] } }]
+    },
+    {
+      "name": "14 - Partner API accepts key",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "X-API-KEY", "value": "{{partnerApiKey}}", "type": "text" }],
+        "url": "{{baseUrl}}/api/public/courses"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"] } }]
+    },
+    {
+      "name": "15 - Partner API rejects wrong key",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "X-API-KEY", "value": "wrong-key", "type": "text" }],
+        "url": "{{baseUrl}}/api/public/courses"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 403', () => pm.response.to.have.status(403));"] } }]
+    },
+    {
+      "name": "16 - Internal API is not exposed by Gateway",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }],
+        "url": "{{baseUrl}}/internal/courses/{{createdCourseId}}/reserve-seat"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 404', () => pm.response.to.have.status(404));"] } }]
+    },
+    {
+      "name": "17 - ADMIN removes test course",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }],
+        "url": "{{baseUrl}}/api/courses/{{createdCourseId}}"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('HTTP 204', () => pm.response.to.have.status(204));"] } }]
+    }
+  ]
+}
