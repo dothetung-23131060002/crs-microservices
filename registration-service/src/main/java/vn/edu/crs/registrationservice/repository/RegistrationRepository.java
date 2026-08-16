@@ -1,10 +1,7 @@
-// path: registration-service/src/main/java/vn/edu/crs/registrationservice/repository/RegistrationRepository.java
-// purpose: repository JPA cho Registration
-
 package vn.edu.crs.registrationservice.repository;
 
-import vn.edu.crs.registrationservice.entity.Registration;
 import org.springframework.data.jpa.repository.JpaRepository;
+import vn.edu.crs.registrationservice.entity.Registration;
 
 import java.util.List;
 

@@ -1,6 +1,3 @@
-// path: registration-service/src/main/java/vn/edu/crs/registrationservice/exception/GlobalExceptionHandler.java
-// purpose: bat loi tap trung cho registration-service, cung format JSON nhu course-service
-
 package vn.edu.crs.registrationservice.exception;
 
 import org.springframework.http.HttpStatus;
@@ -9,7 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -17,20 +14,31 @@ import java.util.NoSuchElementException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", ex.getMessage()));
+    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException exception) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
+    public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(CourseServiceUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handleCourseServiceUnavailable(
+            CourseServiceUnavailableException exception) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors()
-                .forEach(fe -> errors.put(fe.getField(), fe.getDefaultMessage()));
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException exception) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        exception.getBindingResult().getFieldErrors()
+                .forEach(fieldError -> errors.putIfAbsent(
+                        fieldError.getField(), fieldError.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(Map.of("message", message));
     }
 }
