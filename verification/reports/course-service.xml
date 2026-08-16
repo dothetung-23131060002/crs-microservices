@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="course-service" tests="18" time="3.128">
+  <testsuite name="01 - Setup - Login admin and start a fresh run" id="6c288d2b-00c4-49f9-9b63-ff75b233ac43" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.502">
+    <testcase name="HTTP 200" time="0.502" classname="01SetupLoginAdminAndStartAFreshRun"/>
+  </testsuite>
+  <testsuite name="02 - POST validation rejects invalid course" id="6b8eab55-7b59-4573-ab61-dd5978e9e363" timestamp="2026-08-16T06:09:19.218Z" tests="2" failures="0" errors="0" time="1.177">
+    <testcase name="HTTP 400" time="1.177" classname="02PostValidationRejectsInvalidCourse"/>
+    <testcase name="All required field errors are JSON" time="1.177" classname="02PostValidationRejectsInvalidCourse"/>
+  </testsuite>
+  <testsuite name="03 - POST creates primary course" id="18443210-e60c-45a6-bfc5-8f4bad714c45" timestamp="2026-08-16T06:09:19.218Z" tests="2" failures="0" errors="0" time="0.489">
+    <testcase name="HTTP 201" time="0.489" classname="03PostCreatesPrimaryCourse"/>
+    <testcase name="Create initializes remaining seats" time="0.489" classname="03PostCreatesPrimaryCourse"/>
+  </testsuite>
+  <testsuite name="04 - POST creates secondary course" id="bdc5c632-52b7-4f71-9f3e-38111e3e7b0a" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.173">
+    <testcase name="HTTP 201" time="0.173" classname="04PostCreatesSecondaryCourse"/>
+  </testsuite>
+  <testsuite name="05 - GET all courses returns a Page" id="bdf88f97-97d8-4149-b894-be1b78ebf82c" timestamp="2026-08-16T06:09:19.218Z" tests="2" failures="0" errors="0" time="0.160">
+    <testcase name="HTTP 200" time="0.160" classname="05GetAllCoursesReturnsAPage"/>
+    <testcase name="Page response contains both created IDs" time="0.160" classname="05GetAllCoursesReturnsAPage"/>
+  </testsuite>
+  <testsuite name="06 - GET course by ID" id="3ce9cf41-bcf4-4e5e-837c-0a4c317704e9" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.030">
+    <testcase name="HTTP 200" time="0.030" classname="06GetCourseById"/>
+  </testsuite>
+  <testsuite name="07 - PUT updates course without resetting remaining seats" id="f06e218e-fab6-4848-aa1f-569d96aafe92" timestamp="2026-08-16T06:09:19.218Z" tests="2" failures="0" errors="0" time="0.086">
+    <testcase name="HTTP 200" time="0.086" classname="07PutUpdatesCourseWithoutResettingRemainingSeats"/>
+    <testcase name="Mutable fields changed and remaining seats stayed server-owned" time="0.086" classname="07PutUpdatesCourseWithoutResettingRemainingSeats"/>
+  </testsuite>
+  <testsuite name="08 - GET search supports keyword page size and sort" id="292fe49a-9ef7-4740-86f4-a58c676d7acb" timestamp="2026-08-16T06:09:19.218Z" tests="2" failures="0" errors="0" time="0.061">
+    <testcase name="HTTP 200" time="0.061" classname="08GetSearchSupportsKeywordPageSizeAndSort"/>
+    <testcase name="Keyword, pagination and ascending sort are all applied" time="0.061" classname="08GetSearchSupportsKeywordPageSizeAndSort"/>
+  </testsuite>
+  <testsuite name="09 - PATCH reserve seat from 2 to 1" id="1da3b0fa-edc8-43d1-ac80-504379737187" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.070">
+    <testcase name="HTTP 200" time="0.070" classname="09PatchReserveSeatFrom2To1"/>
+  </testsuite>
+  <testsuite name="10 - PATCH reserve last seat from 1 to 0" id="66545995-8dc2-49ff-bfd9-800add444516" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.060">
+    <testcase name="HTTP 200" time="0.060" classname="10PatchReserveLastSeatFrom1To0"/>
+  </testsuite>
+  <testsuite name="11 - PATCH reserve sold-out course returns 409" id="65d76ae9-cd8b-4d3f-a95d-26bce455b494" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.024">
+    <testcase name="HTTP 409" time="0.024" classname="11PatchReserveSoldOutCourseReturns409"/>
+  </testsuite>
+  <testsuite name="12 - PATCH release seat from 0 to 1" id="e77ba6eb-b756-4d79-bc37-e52ef679a7eb" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.040">
+    <testcase name="HTTP 200" time="0.040" classname="12PatchReleaseSeatFrom0To1"/>
+  </testsuite>
+  <testsuite name="13 - PATCH release seat from 1 to 2" id="0da0da20-c26b-4f2f-8845-f033947d571a" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.039">
+    <testcase name="HTTP 200" time="0.039" classname="13PatchReleaseSeatFrom1To2"/>
+  </testsuite>
+  <testsuite name="14 - PATCH release seat reaches maximum 3" id="14e6c3a9-7840-4bc3-9af2-ced5f9fea681" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.043">
+    <testcase name="HTTP 200" time="0.043" classname="14PatchReleaseSeatReachesMaximum3"/>
+  </testsuite>
+  <testsuite name="15 - PATCH release at maximum stays capped" id="095710db-0425-4f16-bb1d-609b8c4a4ded" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.017">
+    <testcase name="HTTP 200" time="0.017" classname="15PatchReleaseAtMaximumStaysCapped"/>
+  </testsuite>
+  <testsuite name="16 - DELETE primary course" id="f0ad53d5-c492-4b6a-bb2a-388eb3087bc4" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.092">
+    <testcase name="HTTP 204" time="0.092" classname="16DeletePrimaryCourse"/>
+  </testsuite>
+  <testsuite name="17 - GET deleted course returns 404" id="09f62250-b88f-4c3f-b5b2-c45777594cd5" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.019">
+    <testcase name="HTTP 404" time="0.019" classname="17GetDeletedCourseReturns404"/>
+  </testsuite>
+  <testsuite name="18 - Cleanup - DELETE secondary course" id="7e52109e-772a-454f-8d50-6accc3b6dc5e" timestamp="2026-08-16T06:09:19.218Z" tests="1" failures="0" errors="0" time="0.046">
+    <testcase name="HTTP 204" time="0.046" classname="18CleanupDeleteSecondaryCourse"/>
+  </testsuite>
+</testsuites>

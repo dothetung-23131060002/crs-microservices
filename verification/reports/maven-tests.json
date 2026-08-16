@@ -1,0 +1,37 @@
+﻿{
+    "checkedAt":  "2026-08-16T13:05:13.6896403+07:00",
+    "tests":  41,
+    "failures":  0,
+    "errors":  0,
+    "skipped":  0,
+    "services":  [
+                     {
+                         "service":  "auth-service",
+                         "tests":  6,
+                         "failures":  0,
+                         "errors":  0,
+                         "skipped":  0
+                     },
+                     {
+                         "service":  "course-service",
+                         "tests":  10,
+                         "failures":  0,
+                         "errors":  0,
+                         "skipped":  0
+                     },
+                     {
+                         "service":  "registration-service",
+                         "tests":  19,
+                         "failures":  0,
+                         "errors":  0,
+                         "skipped":  0
+                     },
+                     {
+                         "service":  "api-gateway",
+                         "tests":  6,
+                         "failures":  0,
+                         "errors":  0,
+                         "skipped":  0
+                     }
+                 ]
+}

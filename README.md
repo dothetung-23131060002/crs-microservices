@@ -66,7 +66,26 @@ API key đối tác local: `crs-partner-key-2026`.
 .\course-service\mvnw.cmd -f .\api-gateway\pom.xml test
 ```
 
-Import collection [`postman/CRS-Microservices.postman_collection.json`](postman/CRS-Microservices.postman_collection.json) và chạy theo thứ tự thư mục trong collection để kiểm tra luồng qua Gateway.
+Các collection Postman export sẵn:
+
+- [`postman/auth-service.postman_collection.json`](postman/auth-service.postman_collection.json): gọi trực tiếp auth-service tại 8081.
+- [`postman/course-service.postman_collection.json`](postman/course-service.postman_collection.json): CRUD, validation, search/page/sort và reserve/release trực tiếp tại 8082.
+- [`postman/registration-service.postman_collection.json`](postman/registration-service.postman_collection.json): luồng đăng ký/hủy xuyên hai service, gọi trực tiếp registration-service tại 8083.
+- [`postman/CRS-Microservices.postman_collection.json`](postman/CRS-Microservices.postman_collection.json): luồng Buổi 4 qua Gateway tại 8080.
+
+Import file cần kiểm tra và chạy các request đúng thứ tự. Course collection cần auth-service + course-service; registration collection cần auth-service + course-service + registration-service. Mỗi lần chạy tạo tên/ID riêng và dọn course thử nghiệm ở cuối.
+
+Ba collection gọi trực tiếp chỉ được giữ làm bằng chứng/tái kiểm tra checkpoint Buổi 1–3. **Từ Buổi 4, chỉ chạy collection `api-gateway`; toàn bộ request trong collection này đi qua `localhost:8080`.**
+
+Case course-service bị tắt trong registration collection được bỏ qua mặc định để không làm hỏng collection run bình thường. Sau một lần chạy thành công, đặt biến collection `runCourseDownCase=true`, dừng course-service, gửi riêng request `MANUAL ONLY - POST while course-service is down`, sau đó đặt lại `false` và khởi động lại course-service.
+
+Để build, chạy 41 test Maven, khởi động bốn service với MySQL, chạy cả bốn collection bằng Newman, kiểm tra database và tự động thử case course-service bị tắt:
+
+```powershell
+.\scripts\verify-all.ps1
+```
+
+Kịch bản luôn dừng các process do nó tạo trong khối `finally`. Báo cáo CLI/JUnit và bằng chứng database được lưu tại [`verification/reports`](verification/reports); kết quả gần nhất nằm trong [`verification-summary.json`](verification/reports/verification-summary.json).
 
 ## Giới hạn giao dịch phân tán
 

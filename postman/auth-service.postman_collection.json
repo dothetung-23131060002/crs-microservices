@@ -1,0 +1,137 @@
+{
+  "info": {
+    "name": "auth-service",
+    "description": "Direct checks for auth-service on port 8081. Start MySQL and auth-service, then run requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "authBaseUrl", "value": "http://localhost:8081" },
+    { "key": "adminToken", "value": "" },
+    { "key": "studentToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Login admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Admin JWT response is complete', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.username).to.eql('admin');",
+              "  pm.expect(body.role).to.eql('ADMIN');",
+              "  pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "  pm.collectionVariables.set('adminToken', body.token);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Login student",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"student123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Student JWT response is complete', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.username).to.eql('student1');",
+              "  pm.expect(body.role).to.eql('STUDENT');",
+              "  pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "  pm.collectionVariables.set('studentToken', body.token);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Wrong password is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrong-password\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+              "pm.test('Error is JSON and clear', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql(401);",
+              "  pm.expect(body.message).to.eql('Sai username hoac password');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Login validation error",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+              "pm.test('Username validation message', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.message).to.eql('Username khong duoc de trong');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

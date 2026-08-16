@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="api-gateway" tests="19" time="2.603">
+  <testsuite name="01 - Core 1 - Login admin" id="010bbf22-af0c-4865-bf53-f9607ef50fe0" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="1.300">
+    <testcase name="Core 1: admin login returns HTTP 200" time="1.300" classname="01Core1LoginAdmin"/>
+    <testcase name="Login response identifies ADMIN and contains a JWT" time="1.300" classname="01Core1LoginAdmin"/>
+  </testsuite>
+  <testsuite name="02 - Required - Login student" id="7d50e55b-038d-4737-b9c9-cbbc7f7a4fe3" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.232">
+    <testcase name="Student login returns HTTP 200" time="0.232" classname="02RequiredLoginStudent"/>
+    <testcase name="Login response identifies STUDENT and contains a JWT" time="0.232" classname="02RequiredLoginStudent"/>
+  </testsuite>
+  <testsuite name="03 - Core 2 - Public course list without JWT" id="48931514-b392-4bc7-94a2-0ec52855fd46" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.035">
+    <testcase name="Core 2: public course list returns HTTP 200" time="0.035" classname="03Core2PublicCourseListWithoutJwt"/>
+    <testcase name="Course response is a pageable list" time="0.035" classname="03Core2PublicCourseListWithoutJwt"/>
+  </testsuite>
+  <testsuite name="04 - Core 3 - Gateway rejects missing Authorization" id="6532c92d-9021-41cc-b99c-c4576cd91008" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.010">
+    <testcase name="Core 3: protected write without Authorization returns HTTP 401" time="0.010" classname="04Core3GatewayRejectsMissingAuthorization"/>
+  </testsuite>
+  <testsuite name="05 - Core 4 - Course service rejects STUDENT write" id="7fc5d8c0-7c93-4d89-81c3-1462e63a9463" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.039">
+    <testcase name="Core 4: STUDENT cannot create a course (HTTP 403)" time="0.039" classname="05Core4CourseServiceRejectsStudentWrite"/>
+  </testsuite>
+  <testsuite name="06 - Core 5 - ADMIN creates a unique course" id="bc9b3c30-3e2d-4a7a-a54b-3513372a4695" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.082">
+    <testcase name="Core 5: ADMIN creates a course (HTTP 201)" time="0.082" classname="06Core5AdminCreatesAUniqueCourse"/>
+    <testcase name="Created course has the requested values and one available seat" time="0.082" classname="06Core5AdminCreatesAUniqueCourse"/>
+  </testsuite>
+  <testsuite name="07 - Extra - ADMIN updates the created course through Gateway" id="0212c65b-7f58-40e8-8a93-b30f93d9b2a7" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.072">
+    <testcase name="ADMIN update returns HTTP 200" time="0.072" classname="07ExtraAdminUpdatesTheCreatedCourseThroughGateway"/>
+    <testcase name="Updated course contains the new name and credit count" time="0.072" classname="07ExtraAdminUpdatesTheCreatedCourseThroughGateway"/>
+  </testsuite>
+  <testsuite name="08 - Core 6 - STUDENT registers the created course" id="078b4260-518f-46cb-a3c4-d772b187cf73" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.141">
+    <testcase name="Core 6: STUDENT registration returns HTTP 201" time="0.141" classname="08Core6StudentRegistersTheCreatedCourse"/>
+    <testcase name="Registration links the dynamic student and course IDs" time="0.141" classname="08Core6StudentRegistersTheCreatedCourse"/>
+  </testsuite>
+  <testsuite name="09 - Extra - Registration reserves the last seat" id="cd0bf986-4914-4aa2-8989-2c253257081c" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.024">
+    <testcase name="Created course remains readable (HTTP 200)" time="0.024" classname="09ExtraRegistrationReservesTheLastSeat"/>
+    <testcase name="Remaining seats decreased from one to zero" time="0.024" classname="09ExtraRegistrationReservesTheLastSeat"/>
+  </testsuite>
+  <testsuite name="10 - Extra - Duplicate registration is rejected" id="a898e1f3-cc53-4fd5-97fa-524f2a97b237" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.033">
+    <testcase name="Duplicate active registration returns HTTP 409" time="0.033" classname="10ExtraDuplicateRegistrationIsRejected"/>
+    <testcase name="Duplicate error explains the conflict" time="0.033" classname="10ExtraDuplicateRegistrationIsRejected"/>
+  </testsuite>
+  <testsuite name="11 - Extra - Sold-out course is rejected" id="4c1ce718-629f-4bfa-863b-2b1613d837ab" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.068">
+    <testcase name="A second student cannot take a sold-out course (HTTP 409)" time="0.068" classname="11ExtraSoldOutCourseIsRejected"/>
+    <testcase name="Sold-out error is propagated by registration-service" time="0.068" classname="11ExtraSoldOutCourseIsRejected"/>
+  </testsuite>
+  <testsuite name="12 - Extra - Registration service rejects an invalid JWT" id="182e873d-60c3-4097-8f36-7a8f80c92103" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.034">
+    <testcase name="Invalid JWT reaches service authentication and returns HTTP 401" time="0.034" classname="12ExtraRegistrationServiceRejectsAnInvalidJwt"/>
+  </testsuite>
+  <testsuite name="13 - Core 7 - Partner API accepts the configured key" id="8a7af720-ac65-4e5f-8ead-b5de203f7030" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.026">
+    <testcase name="Core 7: partner route with X-API-KEY returns HTTP 200" time="0.026" classname="13Core7PartnerApiAcceptsTheConfiguredKey"/>
+    <testcase name="Partner route returns a pageable course list" time="0.026" classname="13Core7PartnerApiAcceptsTheConfiguredKey"/>
+  </testsuite>
+  <testsuite name="14 - Core 8a - Partner API rejects a wrong key" id="431b1127-6438-4fea-9e81-997c10201846" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.007">
+    <testcase name="Core 8a: wrong X-API-KEY returns HTTP 403" time="0.007" classname="14Core8APartnerApiRejectsAWrongKey"/>
+  </testsuite>
+  <testsuite name="15 - Core 8b - Partner API rejects a missing key" id="5bdd4ffb-800d-4a34-a955-b92a33ac5cf9" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.007">
+    <testcase name="Core 8b: missing X-API-KEY returns HTTP 403" time="0.007" classname="15Core8BPartnerApiRejectsAMissingKey"/>
+  </testsuite>
+  <testsuite name="16 - Extra - Internal course API is not exposed by Gateway" id="664f93a6-e017-4a03-8c17-63e0604e9d83" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.274">
+    <testcase name="Gateway has no public route for the internal endpoint (HTTP 404)" time="0.274" classname="16ExtraInternalCourseApiIsNotExposedByGateway"/>
+  </testsuite>
+  <testsuite name="17 - Cleanup - STUDENT cancels the registration" id="f440e102-6571-43f6-8667-9e7feacb600b" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.137">
+    <testcase name="Cleanup cancellation returns HTTP 200" time="0.137" classname="17CleanupStudentCancelsTheRegistration"/>
+  </testsuite>
+  <testsuite name="18 - Cleanup - Cancellation releases the seat" id="5cbba81f-3495-41c8-99fd-9c8bc7b344c4" timestamp="2026-08-16T06:09:54.152Z" tests="2" failures="0" errors="0" time="0.023">
+    <testcase name="Course remains readable after cancellation (HTTP 200)" time="0.023" classname="18CleanupCancellationReleasesTheSeat"/>
+    <testcase name="Cancellation restored the available seat" time="0.023" classname="18CleanupCancellationReleasesTheSeat"/>
+  </testsuite>
+  <testsuite name="19 - Cleanup - ADMIN removes the test course" id="63135b01-f613-479f-85f8-d369546dcc8c" timestamp="2026-08-16T06:09:54.152Z" tests="1" failures="0" errors="0" time="0.059">
+    <testcase name="Cleanup course deletion returns HTTP 204" time="0.059" classname="19CleanupAdminRemovesTheTestCourse"/>
+  </testsuite>
+</testsuites>

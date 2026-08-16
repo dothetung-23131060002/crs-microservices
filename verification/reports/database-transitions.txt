@@ -1,0 +1,7 @@
+﻿checkedAt=2026-08-16T13:09:58.9208987+07:00
+runId=a41d7d8170c84d2c958ffd94a72df55e
+after_create|course_id=19|name=SQL evidence a41d7d8170c84d2c958ffd94a72df55e|max=1|remaining=1
+after_update|course_id=19|name=SQL evidence a41d7d8170c84d2c958ffd94a72df55e updated|credits=4|remaining=1
+after_registration|course_id=19|remaining=0|registration_id=9|student_id=789846456|status=DA_DANG_KY
+after_cancellation|course_id=19|remaining=1|registration_id=9|status=DA_HUY
+after_delete|course_id=19|row_count=0

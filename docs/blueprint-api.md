@@ -1,8 +1,8 @@
 # Blueprint API — Hệ thống CRS Microservices
 
-> Tài liệu này liệt kê toàn bộ endpoint dự kiến cho cả hệ thống,
-> bao gồm cả API nội bộ giữa các service.
-> Blueprint sẽ được cập nhật dần qua các buổi học.
+> Tài liệu này liệt kê contract đã triển khai đến hết Buổi 4,
+> bao gồm cả API nội bộ giữa các service. Endpoint dự kiến từ blueprint Buổi 1
+> nhưng chưa thuộc phạm vi triển khai của bốn buổi được ghi rõ là **Planned**.
 
 ---
 
@@ -13,20 +13,13 @@
 | Method | Endpoint          | Mô tả                        | Yêu cầu xác thực |
 |--------|-------------------|-------------------------------|-------------------|
 | POST   | `/auth/login`     | Đăng nhập, trả về JWT token  | Public            |
-| POST   | `/auth/register`  | Đăng ký tài khoản mới (tuỳ chọn) | Public        |
 
 ### Chi tiết:
 - **POST /auth/login**
   - Request Body: `{ "username": "string", "password": "string" }`
-  - Response: `{ "token": "jwt-string", "type": "Bearer", "expiresIn": 3600 }`
+  - Response: `{ "token": "jwt-string", "username": "admin", "role": "ADMIN" }`
   - HTTP 200: Đăng nhập thành công
   - HTTP 401: Sai username/password
-
-- **POST /auth/register**
-  - Request Body: `{ "username": "string", "password": "string", "fullName": "string", "email": "string" }`
-  - Response: `{ "id": 1, "username": "string", "message": "Đăng ký thành công" }`
-  - HTTP 201: Tạo tài khoản thành công
-  - HTTP 400: Dữ liệu không hợp lệ hoặc username đã tồn tại
 
 ---
 
@@ -46,8 +39,9 @@
 
 ### Chi tiết:
 - **GET /courses**
-  - Query params: `?search=keyword&page=0&size=10`
-  - Response: Mảng JSON các đối tượng Course
+  - Query params: `?keyword=laptrinh&page=0&size=10&sort=tenMonHoc,asc`
+  - Alias `search` vẫn được chấp nhận để tương thích blueprint ban đầu.
+  - Response: Spring Data `Page<CourseDTO>` với mảng dữ liệu trong trường `content`
   - HTTP 200: Trả về danh sách
 
 - **GET /courses/{id}**
@@ -57,12 +51,13 @@
   - HTTP 404: Không tìm thấy
 
 - **POST /courses**
-  - Request Body: `{ "name": "string", "description": "string", "credits": 3, "totalSlots": 50 }`
-  - Response: Đối tượng Course vừa tạo
+  - Request Body: `{ "tenMonHoc": "Lap trinh Java", "soTinChi": 3, "soChoToiDa": 50 }`
+  - Response: `CourseDTO`; server tự đặt `soChoConLai = soChoToiDa`
   - HTTP 201: Tạo thành công
 
 - **PUT /courses/{id}**
   - Request Body: Tương tự POST
+  - `soChoConLai` chỉ thay đổi qua reserve/release, không nhận từ request cập nhật.
   - HTTP 200: Cập nhật thành công
   - HTTP 404: Không tìm thấy
 
@@ -87,7 +82,7 @@
   - HTTP 409 (Conflict): Hết chỗ
 
 - **PATCH /internal/courses/{id}/release-seat**
-  - Tăng `soChoConLai += 1` (không vượt quá `totalSlots`)
+  - Tăng `soChoConLai += 1` (không vượt quá `soChoToiDa`)
   - HTTP 200: Hoàn trả chỗ thành công
   - HTTP 404: Không tìm thấy course
 
@@ -100,12 +95,12 @@
 | Method | Endpoint               | Mô tả                                                          | Yêu cầu xác thực |
 |--------|------------------------|-----------------------------------------------------------------|-------------------|
 | POST   | `/registrations`       | Đăng ký học phần (gọi ngầm sang course-service reserve-seat)   | STUDENT           |
-| GET    | `/registrations/my`    | Danh sách đăng ký của sinh viên đang đăng nhập                 | STUDENT           |
+| GET    | `/registrations/my`    | Danh sách đăng ký của sinh viên hiện tại — **Planned**          | STUDENT           |
 | DELETE | `/registrations/{id}`  | Huỷ đăng ký (gọi ngầm release-seat sang course-service)       | STUDENT / ADMIN   |
 
 ### Chi tiết:
 - **POST /registrations**
-  - Request Body: `{ "courseId": 1 }`
+  - Request Body: `{ "studentId": 1, "courseId": 1 }`
   - Quy trình nội bộ:
     1. Gọi `PATCH /internal/courses/{courseId}/reserve-seat` sang course-service
     2. Nếu thành công → lưu Registration vào DB
@@ -114,16 +109,16 @@
   - HTTP 201: Đăng ký thành công
   - HTTP 409: Hết chỗ
 
-- **GET /registrations/my**
-  - Lấy từ JWT token → xác định studentId
-  - Response: Mảng JSON các Registration của sinh viên
-  - HTTP 200: Trả về danh sách
+- **GET /registrations/my — Planned**
+  - Thuộc blueprint tối thiểu của Buổi 1; chưa được yêu cầu triển khai trong phạm vi Buổi 1–4.
+  - Khi triển khai, `studentId` phải được lấy từ danh tính đã xác thực thay vì tin dữ liệu client gửi lên.
 
 - **DELETE /registrations/{id}**
   - Quy trình nội bộ:
-    1. Xoá Registration khỏi DB
-    2. Gọi `PATCH /internal/courses/{courseId}/release-seat` sang course-service
-  - HTTP 204: Huỷ thành công
+    1. Gọi `PATCH /internal/courses/{courseId}/release-seat` sang course-service
+    2. Chỉ sau khi hoàn chỗ thành công mới đổi trạng thái sang `DA_HUY`
+  - HTTP 200: Huỷ thành công
+  - HTTP 409: Bản ghi đã được huỷ trước đó
   - HTTP 404: Không tìm thấy đăng ký
 
 ---
@@ -133,14 +128,13 @@
 | # | Service              | Method | Endpoint                                | Loại     |
 |---|----------------------|--------|-----------------------------------------|----------|
 | 1 | auth-service         | POST   | `/auth/login`                           | Public   |
-| 2 | auth-service         | POST   | `/auth/register`                        | Public   |
-| 3 | course-service       | GET    | `/courses`                              | Public   |
-| 4 | course-service       | GET    | `/courses/{id}`                         | Public   |
-| 5 | course-service       | POST   | `/courses`                              | ADMIN    |
-| 6 | course-service       | PUT    | `/courses/{id}`                         | ADMIN    |
-| 7 | course-service       | DELETE | `/courses/{id}`                         | ADMIN    |
-| 8 | course-service       | PATCH  | `/internal/courses/{id}/reserve-seat`   | Internal |
-| 9 | course-service       | PATCH  | `/internal/courses/{id}/release-seat`   | Internal |
-| 10| registration-service | POST   | `/registrations`                        | STUDENT  |
-| 11| registration-service | GET    | `/registrations/my`                     | STUDENT  |
-| 12| registration-service | DELETE | `/registrations/{id}`                   | STUDENT/ADMIN |
+| 2 | course-service       | GET    | `/courses`                              | Public   |
+| 3 | course-service       | GET    | `/courses/{id}`                         | Public   |
+| 4 | course-service       | POST   | `/courses`                              | ADMIN    |
+| 5 | course-service       | PUT    | `/courses/{id}`                         | ADMIN    |
+| 6 | course-service       | DELETE | `/courses/{id}`                         | ADMIN    |
+| 7 | course-service       | PATCH  | `/internal/courses/{id}/reserve-seat`   | Internal |
+| 8 | course-service       | PATCH  | `/internal/courses/{id}/release-seat`   | Internal |
+| 9 | registration-service | POST   | `/registrations`                        | STUDENT  |
+| 10| registration-service | GET    | `/registrations/my`                     | STUDENT (Planned) |
+| 11| registration-service | DELETE | `/registrations/{id}`                   | STUDENT/ADMIN |

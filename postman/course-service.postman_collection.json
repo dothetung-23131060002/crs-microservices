@@ -1,0 +1,458 @@
+{
+  "info": {
+    "name": "course-service",
+    "description": "Direct CRUD, validation, search/pagination/sort and internal seat checks for course-service on port 8082. Start auth-service and course-service, then run in order. Test data uses a fresh GUID and is removed at the end.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "authBaseUrl", "value": "http://localhost:8081" },
+    { "key": "courseBaseUrl", "value": "http://localhost:8082" },
+    { "key": "adminToken", "value": "" },
+    { "key": "runId", "value": "" },
+    { "key": "primaryCourseId", "value": "" },
+    { "key": "secondaryCourseId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Setup - Login admin and start a fresh run",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.expect(body.role).to.eql('ADMIN');",
+              "pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "pm.collectionVariables.set('adminToken', body.token);",
+              "pm.collectionVariables.set('runId', pm.variables.replaceIn('{{$guid}}'));",
+              "pm.collectionVariables.unset('primaryCourseId');",
+              "pm.collectionVariables.unset('secondaryCourseId');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - POST validation rejects invalid course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenMonHoc\": \"\",\n  \"soTinChi\": 0,\n  \"soChoToiDa\": 0\n}"
+        },
+        "url": "{{courseBaseUrl}}/courses"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+              "pm.test('All required field errors are JSON', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.have.property('tenMonHoc');",
+              "  pm.expect(body).to.have.property('soTinChi');",
+              "  pm.expect(body).to.have.property('soChoToiDa');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - POST creates primary course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenMonHoc\": \"Buoi123 Alpha {{runId}}\",\n  \"soTinChi\": 3,\n  \"soChoToiDa\": 2\n}"
+        },
+        "url": "{{courseBaseUrl}}/courses"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('Create initializes remaining seats', () => {",
+              "  pm.expect(body.id).to.be.a('number');",
+              "  pm.expect(body.tenMonHoc).to.eql('Buoi123 Alpha ' + pm.collectionVariables.get('runId'));",
+              "  pm.expect(body.soChoToiDa).to.eql(2);",
+              "  pm.expect(body.soChoConLai).to.eql(2);",
+              "});",
+              "pm.collectionVariables.set('primaryCourseId', body.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - POST creates secondary course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenMonHoc\": \"Buoi123 Beta {{runId}}\",\n  \"soTinChi\": 4,\n  \"soChoToiDa\": 5\n}"
+        },
+        "url": "{{courseBaseUrl}}/courses"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.expect(body.tenMonHoc).to.eql('Buoi123 Beta ' + pm.collectionVariables.get('runId'));",
+              "pm.expect(body.soChoConLai).to.eql(5);",
+              "pm.collectionVariables.set('secondaryCourseId', body.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - GET all courses returns a Page",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses?page=0&size=100&sort=id,desc"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Page response contains both created IDs', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.content).to.be.an('array');",
+              "  const ids = body.content.map(course => String(course.id));",
+              "  pm.expect(ids).to.include(String(pm.collectionVariables.get('primaryCourseId')));",
+              "  pm.expect(ids).to.include(String(pm.collectionVariables.get('secondaryCourseId')));",
+              "  pm.expect(body.number).to.eql(0);",
+              "  pm.expect(body.size).to.eql(100);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - GET course by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.expect(String(body.id)).to.eql(String(pm.collectionVariables.get('primaryCourseId')));",
+              "pm.expect(body.tenMonHoc).to.eql('Buoi123 Alpha ' + pm.collectionVariables.get('runId'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - PUT updates course without resetting remaining seats",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenMonHoc\": \"Buoi123 Alpha Updated {{runId}}\",\n  \"soTinChi\": 4,\n  \"soChoToiDa\": 3,\n  \"soChoConLai\": 999\n}"
+        },
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Mutable fields changed and remaining seats stayed server-owned', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.tenMonHoc).to.eql('Buoi123 Alpha Updated ' + pm.collectionVariables.get('runId'));",
+              "  pm.expect(body.soTinChi).to.eql(4);",
+              "  pm.expect(body.soChoToiDa).to.eql(3);",
+              "  pm.expect(body.soChoConLai).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - GET search supports keyword page size and sort",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses?keyword={{runId}}&page=0&size=1&sort=tenMonHoc,asc"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Keyword, pagination and ascending sort are all applied', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.content).to.have.lengthOf(1);",
+              "  pm.expect(body.content[0].tenMonHoc).to.eql('Buoi123 Alpha Updated ' + pm.collectionVariables.get('runId'));",
+              "  pm.expect(body.totalElements).to.eql(2);",
+              "  pm.expect(body.totalPages).to.eql(2);",
+              "  pm.expect(body.number).to.eql(0);",
+              "  pm.expect(body.size).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - PATCH reserve seat from 2 to 1",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/reserve-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(1);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - PATCH reserve last seat from 1 to 0",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/reserve-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(0);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - PATCH reserve sold-out course returns 409",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/reserve-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+              "pm.expect(pm.response.json().message).to.eql('Mon hoc da het cho, khong the dang ky');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - PATCH release seat from 0 to 1",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/release-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(1);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - PATCH release seat from 1 to 2",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/release-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(2);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - PATCH release seat reaches maximum 3",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/release-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(3);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - PATCH release at maximum stays capped",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{courseBaseUrl}}/internal/courses/{{primaryCourseId}}/release-seat"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(3);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - DELETE primary course",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 - GET deleted course returns 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404', () => pm.response.to.have.status(404));",
+              "pm.expect(pm.response.json().message).to.include(String(pm.collectionVariables.get('primaryCourseId')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 - Cleanup - DELETE secondary course",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "url": "{{courseBaseUrl}}/courses/{{secondaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

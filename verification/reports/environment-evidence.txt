@@ -1,0 +1,16 @@
+checkedAt=2026-08-16T13:14:51+07:00
+JAVA_HOME=C:\tools\jdk17\jdk-17.0.12+7
+user_PATH_JDK_bin_occurrences=1
+java=openjdk version "17.0.12" 2024-07-16
+javac=javac 17.0.12
+intellij_idea_2026.2.0.1=installed
+lombok_plugin=installed_and_enabled
+annotation_processing=enabled
+mysql_service=MySQL80 Running
+mysql_server=8.0.46
+mysql_workbench_8.0=installed
+postman_desktop_12.23.8=installed
+git=git version 2.55.0.windows.3
+git_user_name=Do The Tung
+git_user_email=23131060002@hunre.edu.vn
+git_remote=https://github.com/dothetung-23131060002/crs-microservices.git

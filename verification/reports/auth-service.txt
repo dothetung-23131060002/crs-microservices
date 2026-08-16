@@ -1,0 +1,43 @@
+﻿newman
+
+auth-service
+
+→ 01 - Login admin
+  [8/16/2026, 1:09:01 PM]  POST http://localhost:8081/auth/login [200 OK, 531B, 1510ms]
+  [1:09:03 PM]  √  HTTP 200
+  [1:09:03 PM]  √  Admin JWT response is complete
+
+→ 02 - Login student
+  [8/16/2026, 1:09:04 PM]  POST http://localhost:8081/auth/login [200 OK, 542B, 241ms]
+  [1:09:04 PM]  √  HTTP 200
+  [1:09:04 PM]  √  Student JWT response is complete
+
+→ 03 - Wrong password is rejected
+  [8/16/2026, 1:09:04 PM]  POST http://localhost:8081/auth/login [401 Unauthorized, 486B, 273ms]
+  [1:09:04 PM]  √  HTTP 401
+  [1:09:04 PM]  √  Error is JSON and clear
+
+→ 04 - Login validation error
+  [8/16/2026, 1:09:04 PM]  POST http://localhost:8081/auth/login [400 Bad Request, 454B, 25ms]
+  [1:09:04 PM]  √  HTTP 400
+  [1:09:04 PM]  √  Username validation message
+
+┌─────────────────────────┬─────────────────────┬────────────────────┐
+│                         │            executed │             failed │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              iterations │                   1 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│                requests │                   4 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│            test-scripts │                   4 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│      prerequest-scripts │                   0 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              assertions │                   8 │                  0 │
+├─────────────────────────┴─────────────────────┴────────────────────┤
+│ total run duration: 3s                                             │
+├────────────────────────────────────────────────────────────────────┤
+│ total data received: 687B (approx)                                 │
+├────────────────────────────────────────────────────────────────────┤
+│ average response time: 512ms [min: 25ms, max: 1510ms, s.d.: 583ms] │
+└────────────────────────────────────────────────────────────────────┘

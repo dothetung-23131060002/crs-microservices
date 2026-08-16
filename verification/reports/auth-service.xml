@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="auth-service" tests="4" time="2.049">
+  <testsuite name="01 - Login admin" id="3b6343b8-7636-4b7e-bff5-277fed4dd28f" timestamp="2026-08-16T06:09:01.778Z" tests="2" failures="0" errors="0" time="1.510">
+    <testcase name="HTTP 200" time="1.510" classname="01LoginAdmin"/>
+    <testcase name="Admin JWT response is complete" time="1.510" classname="01LoginAdmin"/>
+  </testsuite>
+  <testsuite name="02 - Login student" id="d0223d95-0aa8-4d26-89a5-99f9075b4ef1" timestamp="2026-08-16T06:09:01.778Z" tests="2" failures="0" errors="0" time="0.241">
+    <testcase name="HTTP 200" time="0.241" classname="02LoginStudent"/>
+    <testcase name="Student JWT response is complete" time="0.241" classname="02LoginStudent"/>
+  </testsuite>
+  <testsuite name="03 - Wrong password is rejected" id="00d340d0-2178-4c0d-9052-c529a2063eaa" timestamp="2026-08-16T06:09:01.778Z" tests="2" failures="0" errors="0" time="0.273">
+    <testcase name="HTTP 401" time="0.273" classname="03WrongPasswordIsRejected"/>
+    <testcase name="Error is JSON and clear" time="0.273" classname="03WrongPasswordIsRejected"/>
+  </testsuite>
+  <testsuite name="04 - Login validation error" id="2fb7ca8b-9178-462e-ab1c-fec70ecf71b7" timestamp="2026-08-16T06:09:01.778Z" tests="2" failures="0" errors="0" time="0.025">
+    <testcase name="HTTP 400" time="0.025" classname="04LoginValidationError"/>
+    <testcase name="Username validation message" time="0.025" classname="04LoginValidationError"/>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="registration-service" tests="15" time="3.194">
+  <testsuite name="01 - Setup - Login admin and create unique test IDs" id="bec02b39-6595-4b76-bc31-0859d6f22d42" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.270">
+    <testcase name="HTTP 200" time="0.270" classname="01SetupLoginAdminAndCreateUniqueTestIDs"/>
+  </testsuite>
+  <testsuite name="02 - Setup - Login student" id="963d8125-298c-4e1f-b1c4-46f06768ba04" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.276">
+    <testcase name="HTTP 200" time="0.276" classname="02SetupLoginStudent"/>
+  </testsuite>
+  <testsuite name="03 - POST validation rejects missing courseId" id="e1f9a432-d9b7-41f7-9c36-9e8bbcfd3248" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.985">
+    <testcase name="HTTP 400" time="0.985" classname="03PostValidationRejectsMissingCourseId"/>
+  </testsuite>
+  <testsuite name="04 - Setup - ADMIN creates one-seat course" id="1811bc13-37c2-4422-a14c-859f190e152c" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.055">
+    <testcase name="HTTP 201" time="0.055" classname="04SetupAdminCreatesOneSeatCourse"/>
+  </testsuite>
+  <testsuite name="05 - POST registration succeeds and stores DA_DANG_KY" id="faac5fc2-6fce-4f52-9225-6c1a02379532" timestamp="2026-08-16T06:09:36.691Z" tests="2" failures="0" errors="0" time="1.146">
+    <testcase name="HTTP 201" time="1.146" classname="05PostRegistrationSucceedsAndStoresDaDangKy"/>
+    <testcase name="Registration contains the requested logical references" time="1.146" classname="05PostRegistrationSucceedsAndStoresDaDangKy"/>
+  </testsuite>
+  <testsuite name="06 - GET course proves seat was reserved" id="7b2f6c69-dcd1-4eba-9c2e-02d0ef0c41ea" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.014">
+    <testcase name="HTTP 200" time="0.014" classname="06GetCourseProvesSeatWasReserved"/>
+  </testsuite>
+  <testsuite name="07 - POST duplicate registration is rejected" id="dc4eb480-ee80-4b3d-a186-be707c321194" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.030">
+    <testcase name="HTTP 409" time="0.030" classname="07PostDuplicateRegistrationIsRejected"/>
+  </testsuite>
+  <testsuite name="08 - GET course proves duplicate did not reserve twice" id="9a0c0abc-5e20-4d2d-9a5e-fd9e7725084b" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.021">
+    <testcase name="HTTP 200" time="0.021" classname="08GetCourseProvesDuplicateDidNotReserveTwice"/>
+  </testsuite>
+  <testsuite name="09 - POST sold-out course is rejected" id="757c4add-8c20-41bf-bd5c-38881bc49969" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.050">
+    <testcase name="HTTP 409" time="0.050" classname="09PostSoldOutCourseIsRejected"/>
+  </testsuite>
+  <testsuite name="10 - POST nonexistent course is rejected" id="8bf2c465-b19c-4f11-a820-39baddba459f" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.043">
+    <testcase name="HTTP 409" time="0.043" classname="10PostNonexistentCourseIsRejected"/>
+  </testsuite>
+  <testsuite name="11 - DELETE registration releases seat and cancels" id="96ea64c8-c802-4249-97d4-d0ea11a971af" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.209">
+    <testcase name="HTTP 200" time="0.209" classname="11DeleteRegistrationReleasesSeatAndCancels"/>
+  </testsuite>
+  <testsuite name="12 - GET course proves seat was released" id="f1a25835-5b26-4c7f-8221-6541f2c21684" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.017">
+    <testcase name="HTTP 200" time="0.017" classname="12GetCourseProvesSeatWasReleased"/>
+  </testsuite>
+  <testsuite name="13 - DELETE already-cancelled registration is rejected" id="f58379c6-5b4f-4038-92a9-c4601b2feabf" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.017">
+    <testcase name="HTTP 409" time="0.017" classname="13DeleteAlreadyCancelledRegistrationIsRejected"/>
+  </testsuite>
+  <testsuite name="14 - GET course proves double cancel did not release twice" id="1648b5f2-d914-42aa-8143-cdba1e6d8c96" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.013">
+    <testcase name="HTTP 200" time="0.013" classname="14GetCourseProvesDoubleCancelDidNotReleaseTwice"/>
+  </testsuite>
+  <testsuite name="15 - Cleanup - ADMIN deletes test course" id="7820ae42-bd78-481b-a0be-1c80a5e3103b" timestamp="2026-08-16T06:09:36.691Z" tests="1" failures="0" errors="0" time="0.048">
+    <testcase name="HTTP 204" time="0.048" classname="15CleanupAdminDeletesTestCourse"/>
+  </testsuite>
+</testsuites>

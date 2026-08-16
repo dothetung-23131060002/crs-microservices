@@ -1,0 +1,7 @@
+﻿{
+    "checkedAt":  "2026-08-16T13:10:02.3158366+07:00",
+    "courseServicePort8082Listening":  false,
+    "status":  503,
+    "elapsedMilliseconds":  90,
+    "message":  "Khong the ket noi toi course-service, vui long thu lai sau"
+}

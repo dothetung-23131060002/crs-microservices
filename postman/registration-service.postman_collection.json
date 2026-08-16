@@ -1,0 +1,448 @@
+{
+  "info": {
+    "name": "registration-service",
+    "description": "Direct cross-service checks for registration-service on port 8083. Start auth-service, course-service and registration-service, then run in order. The final course-down request is skipped by default; see its description and README for the manual failure-injection procedure.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "authBaseUrl", "value": "http://localhost:8081" },
+    { "key": "courseBaseUrl", "value": "http://localhost:8082" },
+    { "key": "registrationBaseUrl", "value": "http://localhost:8083" },
+    { "key": "adminToken", "value": "" },
+    { "key": "studentToken", "value": "" },
+    { "key": "runId", "value": "" },
+    { "key": "primaryCourseId", "value": "" },
+    { "key": "registrationId", "value": "" },
+    { "key": "studentIdPrimary", "value": "" },
+    { "key": "studentIdSoldOut", "value": "" },
+    { "key": "studentIdMissing", "value": "" },
+    { "key": "studentIdUnavailable", "value": "" },
+    { "key": "nonexistentCourseId", "value": "999999999" },
+    { "key": "runCourseDownCase", "value": "false" }
+  ],
+  "item": [
+    {
+      "name": "01 - Setup - Login admin and create unique test IDs",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.expect(body.role).to.eql('ADMIN');",
+              "pm.collectionVariables.set('adminToken', body.token);",
+              "pm.collectionVariables.set('runId', pm.variables.replaceIn('{{$guid}}'));",
+              "const baseStudentId = Date.now();",
+              "pm.collectionVariables.set('studentIdPrimary', String(baseStudentId));",
+              "pm.collectionVariables.set('studentIdSoldOut', String(baseStudentId + 1));",
+              "pm.collectionVariables.set('studentIdMissing', String(baseStudentId + 2));",
+              "pm.collectionVariables.set('studentIdUnavailable', String(baseStudentId + 3));",
+              "pm.collectionVariables.unset('primaryCourseId');",
+              "pm.collectionVariables.unset('registrationId');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Setup - Login student",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"student123\"\n}"
+        },
+        "url": "{{authBaseUrl}}/auth/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.expect(body.role).to.eql('STUDENT');",
+              "pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "pm.collectionVariables.set('studentToken', body.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - POST validation rejects missing courseId",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdPrimary}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+              "pm.expect(pm.response.json().courseId).to.eql('courseId khong duoc de trong');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Setup - ADMIN creates one-seat course",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenMonHoc\": \"Buoi3 Registration {{runId}}\",\n  \"soTinChi\": 3,\n  \"soChoToiDa\": 1\n}"
+        },
+        "url": "{{courseBaseUrl}}/courses"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.expect(body.soChoConLai).to.eql(1);",
+              "pm.collectionVariables.set('primaryCourseId', body.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - POST registration succeeds and stores DA_DANG_KY",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdPrimary}},\n  \"courseId\": {{primaryCourseId}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+              "pm.test('Registration contains the requested logical references', () => {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.id).to.be.a('number');",
+              "  pm.expect(String(body.studentId)).to.eql(String(pm.collectionVariables.get('studentIdPrimary')));",
+              "  pm.expect(String(body.courseId)).to.eql(String(pm.collectionVariables.get('primaryCourseId')));",
+              "  pm.expect(body.trangThai).to.eql('DA_DANG_KY');",
+              "  pm.expect(body.ngayDangKy).to.be.a('string').and.not.empty;",
+              "  pm.collectionVariables.set('registrationId', body.id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - GET course proves seat was reserved",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(0);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - POST duplicate registration is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdPrimary}},\n  \"courseId\": {{primaryCourseId}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+              "pm.expect(pm.response.json().message).to.eql('Sinh vien da dang ky mon hoc nay roi');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - GET course proves duplicate did not reserve twice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(0);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - POST sold-out course is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdSoldOut}},\n  \"courseId\": {{primaryCourseId}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+              "pm.expect(pm.response.json().message).to.eql('Mon hoc da het cho');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - POST nonexistent course is rejected",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdMissing}},\n  \"courseId\": {{nonexistentCourseId}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+              "pm.expect(pm.response.json().message).to.eql('Mon hoc khong ton tai');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - DELETE registration releases seat and cancels",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "url": "{{registrationBaseUrl}}/registrations/{{registrationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - GET course proves seat was released",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(1);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - DELETE already-cancelled registration is rejected",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "url": "{{registrationBaseUrl}}/registrations/{{registrationId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+              "pm.expect(pm.response.json().message).to.eql('Dang ky nay da duoc huy truoc do');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - GET course proves double cancel did not release twice",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().soChoConLai).to.eql(1);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Cleanup - ADMIN deletes test course",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}", "type": "text" }
+        ],
+        "url": "{{courseBaseUrl}}/courses/{{primaryCourseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "MANUAL ONLY - POST while course-service is down",
+      "description": "Skipped in normal runs. First run this collection normally to obtain a valid studentToken and unique studentIdUnavailable. Set collection variable runCourseDownCase=true, stop course-service, then send only this request. Expect HTTP 503 within the configured timeout. Reset the variable to false and restart course-service afterward.",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json", "type": "text" },
+          { "key": "Authorization", "value": "Bearer {{studentToken}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": {{studentIdUnavailable}},\n  \"courseId\": {{primaryCourseId}}\n}"
+        },
+        "url": "{{registrationBaseUrl}}/registrations"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.collectionVariables.get('runCourseDownCase') !== 'true') {",
+              "  pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 503', () => pm.response.to.have.status(503));",
+              "pm.test('Connection failure is clear and bounded', () => {",
+              "  pm.expect(pm.response.json().message).to.eql('Khong the ket noi toi course-service, vui long thu lai sau');",
+              "  pm.expect(pm.response.responseTime).to.be.below(7000);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

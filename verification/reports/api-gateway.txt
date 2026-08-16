@@ -1,0 +1,110 @@
+﻿newman
+
+api-gateway
+
+→ 01 - Core 1 - Login admin
+  [8/16/2026, 1:09:54 PM]  POST http://localhost:8080/api/auth/login [200 OK, 572B, 1300ms]
+  [1:09:55 PM]  √  Core 1: admin login returns HTTP 200
+  [1:09:55 PM]  √  Login response identifies ADMIN and contains a JWT
+
+→ 02 - Required - Login student
+  [8/16/2026, 1:09:55 PM]  POST http://localhost:8080/api/auth/login [200 OK, 583B, 232ms]
+  [1:09:56 PM]  √  Student login returns HTTP 200
+  [1:09:56 PM]  √  Login response identifies STUDENT and contains a JWT
+
+→ 03 - Core 2 - Public course list without JWT
+  [8/16/2026, 1:09:56 PM]  GET http://localhost:8080/api/courses?page=0&size=10&sort=tenMonHoc,asc [200 OK, 1.03kB, 35ms]
+  [1:09:56 PM]  √  Core 2: public course list returns HTTP 200
+  [1:09:56 PM]  √  Course response is a pageable list
+
+→ 04 - Core 3 - Gateway rejects missing Authorization
+  [8/16/2026, 1:09:56 PM]  POST http://localhost:8080/api/courses [401 Unauthorized, 137B, 10ms]
+  [1:09:56 PM]  √  Core 3: protected write without Authorization returns HTTP 401
+
+→ 05 - Core 4 - Course service rejects STUDENT write
+  [8/16/2026, 1:09:56 PM]  POST http://localhost:8080/api/courses [403 Forbidden, 341B, 39ms]
+  [1:09:56 PM]  √  Core 4: STUDENT cannot create a course (HTTP 403)
+
+→ 06 - Core 5 - ADMIN creates a unique course
+  [8/16/2026, 1:09:56 PM]  POST http://localhost:8080/api/courses [201 Created, 482B, 82ms]
+  [1:09:56 PM]  √  Core 5: ADMIN creates a course (HTTP 201)
+  [1:09:56 PM]  √  Created course has the requested values and one available seat
+
+→ 07 - Extra - ADMIN updates the created course through Gateway
+  [8/16/2026, 1:09:56 PM]  PUT http://localhost:8080/api/courses/18 [200 OK, 485B, 72ms]
+  [1:09:56 PM]  √  ADMIN update returns HTTP 200
+  [1:09:56 PM]  √  Updated course contains the new name and credit count
+
+→ 08 - Core 6 - STUDENT registers the created course
+  [8/16/2026, 1:09:56 PM]  POST http://localhost:8080/api/registrations [201 Created, 496B, 141ms]
+  [1:09:56 PM]  √  Core 6: STUDENT registration returns HTTP 201
+  [1:09:56 PM]  √  Registration links the dynamic student and course IDs
+
+→ 09 - Extra - Registration reserves the last seat
+  [8/16/2026, 1:09:57 PM]  GET http://localhost:8080/api/courses/18 [200 OK, 485B, 24ms]
+  [1:09:57 PM]  √  Created course remains readable (HTTP 200)
+  [1:09:57 PM]  √  Remaining seats decreased from one to zero
+
+→ 10 - Extra - Duplicate registration is rejected
+  [8/16/2026, 1:09:57 PM]  POST http://localhost:8080/api/registrations [409 Conflict, 431B, 33ms]
+  [1:09:57 PM]  √  Duplicate active registration returns HTTP 409
+  [1:09:57 PM]  √  Duplicate error explains the conflict
+
+→ 11 - Extra - Sold-out course is rejected
+  [8/16/2026, 1:09:57 PM]  POST http://localhost:8080/api/registrations [409 Conflict, 413B, 68ms]
+  [1:09:57 PM]  √  A second student cannot take a sold-out course (HTTP 409)
+  [1:09:57 PM]  √  Sold-out error is propagated by registration-service
+
+→ 12 - Extra - Registration service rejects an invalid JWT
+  [8/16/2026, 1:09:57 PM]  POST http://localhost:8080/api/registrations [401 Unauthorized, 417B, 34ms]
+  [1:09:57 PM]  √  Invalid JWT reaches service authentication and returns HTTP 401
+
+→ 13 - Core 7 - Partner API accepts the configured key
+  [8/16/2026, 1:09:57 PM]  GET http://localhost:8080/api/public/courses?page=0&size=10 [200 OK, 1.14kB, 26ms]
+  [1:09:57 PM]  √  Core 7: partner route with X-API-KEY returns HTTP 200
+  [1:09:57 PM]  √  Partner route returns a pageable course list
+
+→ 14 - Core 8a - Partner API rejects a wrong key
+  [8/16/2026, 1:09:57 PM]  GET http://localhost:8080/api/public/courses [403 Forbidden, 134B, 7ms]
+  [1:09:57 PM]  √  Core 8a: wrong X-API-KEY returns HTTP 403
+
+→ 15 - Core 8b - Partner API rejects a missing key
+  [8/16/2026, 1:09:57 PM]  GET http://localhost:8080/api/public/courses [403 Forbidden, 134B, 7ms]
+  [1:09:57 PM]  √  Core 8b: missing X-API-KEY returns HTTP 403
+
+→ 16 - Extra - Internal course API is not exposed by Gateway
+  [8/16/2026, 1:09:57 PM]  PATCH http://localhost:8080/internal/courses/18/reserve-seat [404 Not Found, 315B, 274ms]
+  [1:09:58 PM]  √  Gateway has no public route for the internal endpoint (HTTP 404)
+
+→ 17 - Cleanup - STUDENT cancels the registration
+  [8/16/2026, 1:09:58 PM]  DELETE http://localhost:8080/api/registrations/8 [200 OK, 334B, 137ms]
+  [1:09:58 PM]  √  Cleanup cancellation returns HTTP 200
+
+→ 18 - Cleanup - Cancellation releases the seat
+  [8/16/2026, 1:09:58 PM]  GET http://localhost:8080/api/courses/18 [200 OK, 485B, 23ms]
+  [1:09:58 PM]  √  Course remains readable after cancellation (HTTP 200)
+  [1:09:58 PM]  √  Cancellation restored the available seat
+
+→ 19 - Cleanup - ADMIN removes the test course
+  [8/16/2026, 1:09:58 PM]  DELETE http://localhost:8080/api/courses/18 [204 No Content, 323B, 59ms]
+  [1:09:58 PM]  √  Cleanup course deletion returns HTTP 204
+
+┌─────────────────────────┬────────────────────┬────────────────────┐
+│                         │           executed │             failed │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│              iterations │                  1 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│                requests │                 19 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│            test-scripts │                 19 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│      prerequest-scripts │                  1 │                  0 │
+├─────────────────────────┼────────────────────┼────────────────────┤
+│              assertions │                 30 │                  0 │
+├─────────────────────────┴────────────────────┴────────────────────┤
+│ total run duration: 4.3s                                          │
+├───────────────────────────────────────────────────────────────────┤
+│ total data received: 2.63kB (approx)                              │
+├───────────────────────────────────────────────────────────────────┤
+│ average response time: 137ms [min: 7ms, max: 1300ms, s.d.: 283ms] │
+└───────────────────────────────────────────────────────────────────┘

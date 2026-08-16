@@ -1,0 +1,100 @@
+﻿newman
+
+course-service
+
+→ 01 - Setup - Login admin and start a fresh run
+  [8/16/2026, 1:09:19 PM]  POST http://localhost:8081/auth/login [200 OK, 531B, 502ms]
+  [1:09:20 PM]  √  HTTP 200
+
+→ 02 - POST validation rejects invalid course
+  [8/16/2026, 1:09:20 PM]  POST http://localhost:8082/courses [400 Bad Request, 444B, 1177ms]
+  [1:09:21 PM]  √  HTTP 400
+  [1:09:21 PM]  √  All required field errors are JSON
+
+→ 03 - POST creates primary course
+  [8/16/2026, 1:09:21 PM]  POST http://localhost:8082/courses [201 Created, 457B, 489ms]
+  [1:09:22 PM]  √  HTTP 201
+  [1:09:22 PM]  √  Create initializes remaining seats
+
+→ 04 - POST creates secondary course
+  [8/16/2026, 1:09:22 PM]  POST http://localhost:8082/courses [201 Created, 456B, 173ms]
+  [1:09:22 PM]  √  HTTP 201
+
+→ 05 - GET all courses returns a Page
+  [8/16/2026, 1:09:22 PM]  GET http://localhost:8082/courses?page=0&size=100&sort=id,desc [200 OK, 1.23kB, 160ms]
+  [1:09:22 PM]  √  HTTP 200
+  [1:09:22 PM]  √  Page response contains both created IDs
+
+→ 06 - GET course by ID
+  [8/16/2026, 1:09:22 PM]  GET http://localhost:8082/courses/15 [200 OK, 452B, 30ms]
+  [1:09:22 PM]  √  HTTP 200
+
+→ 07 - PUT updates course without resetting remaining seats
+  [8/16/2026, 1:09:22 PM]  PUT http://localhost:8082/courses/15 [200 OK, 460B, 86ms]
+  [1:09:23 PM]  √  HTTP 200
+  [1:09:23 PM]  √  Mutable fields changed and remaining seats stayed server-owned
+
+→ 08 - GET search supports keyword page size and sort
+  [8/16/2026, 1:09:23 PM]  GET http://localhost:8082/courses?keyword=1b032cb0-8fd4-4f65-9c28-630a46a92f7e&page=0&size=1&sort=tenMonHoc,asc [200 OK, 777B, 61ms]
+  [1:09:23 PM]  √  HTTP 200
+  [1:09:23 PM]  √  Keyword, pagination and ascending sort are all applied
+
+→ 09 - PATCH reserve seat from 2 to 1
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/reserve-seat [200 OK, 460B, 70ms]
+  [1:09:23 PM]  √  HTTP 200
+
+→ 10 - PATCH reserve last seat from 1 to 0
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/reserve-seat [200 OK, 460B, 60ms]
+  [1:09:23 PM]  √  HTTP 200
+
+→ 11 - PATCH reserve sold-out course returns 409
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/reserve-seat [409 Conflict, 391B, 24ms]
+  [1:09:23 PM]  √  HTTP 409
+
+→ 12 - PATCH release seat from 0 to 1
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/release-seat [200 OK, 460B, 40ms]
+  [1:09:23 PM]  √  HTTP 200
+
+→ 13 - PATCH release seat from 1 to 2
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/release-seat [200 OK, 460B, 39ms]
+  [1:09:23 PM]  √  HTTP 200
+
+→ 14 - PATCH release seat reaches maximum 3
+  [8/16/2026, 1:09:23 PM]  PATCH http://localhost:8082/internal/courses/15/release-seat [200 OK, 460B, 43ms]
+  [1:09:23 PM]  √  HTTP 200
+
+→ 15 - PATCH release at maximum stays capped
+  [8/16/2026, 1:09:24 PM]  PATCH http://localhost:8082/internal/courses/15/release-seat [200 OK, 460B, 17ms]
+  [1:09:24 PM]  √  HTTP 200
+
+→ 16 - DELETE primary course
+  [8/16/2026, 1:09:24 PM]  DELETE http://localhost:8082/courses/15 [204 No Content, 282B, 92ms]
+  [1:09:24 PM]  √  HTTP 204
+
+→ 17 - GET deleted course returns 404
+  [8/16/2026, 1:09:24 PM]  GET http://localhost:8082/courses/15 [404 Not Found, 385B, 19ms]
+  [1:09:24 PM]  √  HTTP 404
+
+→ 18 - Cleanup - DELETE secondary course
+  [8/16/2026, 1:09:24 PM]  DELETE http://localhost:8082/courses/16 [204 No Content, 282B, 46ms]
+  [1:09:24 PM]  √  HTTP 204
+
+┌─────────────────────────┬─────────────────────┬────────────────────┐
+│                         │            executed │             failed │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              iterations │                   1 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│                requests │                  18 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│            test-scripts │                  18 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│      prerequest-scripts │                   0 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              assertions │                  23 │                  0 │
+├─────────────────────────┴─────────────────────┴────────────────────┤
+│ total run duration: 5.3s                                           │
+├────────────────────────────────────────────────────────────────────┤
+│ total data received: 2.99kB (approx)                               │
+├────────────────────────────────────────────────────────────────────┤
+│ average response time: 173ms [min: 17ms, max: 1177ms, s.d.: 281ms] │
+└────────────────────────────────────────────────────────────────────┘

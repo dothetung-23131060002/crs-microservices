@@ -1,0 +1,7 @@
+﻿auth_db
+course_db
+registration_db
+course_count=4
+registration_count=9
+admin|ADMIN|bcrypt=1
+student1|STUDENT|bcrypt=1

@@ -1,0 +1,86 @@
+﻿newman
+
+registration-service
+
+→ 01 - Setup - Login admin and create unique test IDs
+  [8/16/2026, 1:09:36 PM]  POST http://localhost:8081/auth/login [200 OK, 531B, 270ms]
+  [1:09:37 PM]  √  HTTP 200
+
+→ 02 - Setup - Login student
+  [8/16/2026, 1:09:37 PM]  POST http://localhost:8081/auth/login [200 OK, 542B, 276ms]
+  [1:09:37 PM]  √  HTTP 200
+
+→ 03 - POST validation rejects missing courseId
+  [8/16/2026, 1:09:37 PM]  POST http://localhost:8083/registrations [400 Bad Request, 357B, 985ms]
+  [1:09:38 PM]  √  HTTP 400
+
+→ 04 - Setup - ADMIN creates one-seat course
+  [8/16/2026, 1:09:38 PM]  POST http://localhost:8082/courses [201 Created, 462B, 55ms]
+  [1:09:38 PM]  √  HTTP 201
+
+→ 05 - POST registration succeeds and stores DA_DANG_KY
+  [8/16/2026, 1:09:38 PM]  POST http://localhost:8083/registrations [201 Created, 454B, 1146ms]
+  [1:09:39 PM]  √  HTTP 201
+  [1:09:39 PM]  √  Registration contains the requested logical references
+
+→ 06 - GET course proves seat was reserved
+  [8/16/2026, 1:09:40 PM]  GET http://localhost:8082/courses/17 [200 OK, 457B, 14ms]
+  [1:09:40 PM]  √  HTTP 200
+
+→ 07 - POST duplicate registration is rejected
+  [8/16/2026, 1:09:40 PM]  POST http://localhost:8083/registrations [409 Conflict, 390B, 30ms]
+  [1:09:40 PM]  √  HTTP 409
+
+→ 08 - GET course proves duplicate did not reserve twice
+  [8/16/2026, 1:09:40 PM]  GET http://localhost:8082/courses/17 [200 OK, 457B, 21ms]
+  [1:09:40 PM]  √  HTTP 200
+
+→ 09 - POST sold-out course is rejected
+  [8/16/2026, 1:09:40 PM]  POST http://localhost:8083/registrations [409 Conflict, 372B, 50ms]
+  [1:09:40 PM]  √  HTTP 409
+
+→ 10 - POST nonexistent course is rejected
+  [8/16/2026, 1:09:40 PM]  POST http://localhost:8083/registrations [409 Conflict, 375B, 43ms]
+  [1:09:40 PM]  √  HTTP 409
+
+→ 11 - DELETE registration releases seat and cancels
+  [8/16/2026, 1:09:40 PM]  DELETE http://localhost:8083/registrations/7 [200 OK, 293B, 209ms]
+  [1:09:40 PM]  √  HTTP 200
+
+→ 12 - GET course proves seat was released
+  [8/16/2026, 1:09:40 PM]  GET http://localhost:8082/courses/17 [200 OK, 457B, 17ms]
+  [1:09:40 PM]  √  HTTP 200
+
+→ 13 - DELETE already-cancelled registration is rejected
+  [8/16/2026, 1:09:41 PM]  DELETE http://localhost:8083/registrations/7 [409 Conflict, 386B, 17ms]
+  [1:09:41 PM]  √  HTTP 409
+
+→ 14 - GET course proves double cancel did not release twice
+  [8/16/2026, 1:09:41 PM]  GET http://localhost:8082/courses/17 [200 OK, 457B, 13ms]
+  [1:09:41 PM]  √  HTTP 200
+
+→ 15 - Cleanup - ADMIN deletes test course
+  [8/16/2026, 1:09:41 PM]  DELETE http://localhost:8082/courses/17 [204 No Content, 282B, 48ms]
+  [1:09:41 PM]  √  HTTP 204
+
+→ MANUAL ONLY - POST while course-service is down
+
+┌─────────────────────────┬─────────────────────┬────────────────────┐
+│                         │            executed │             failed │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              iterations │                   1 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│                requests │                  15 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│            test-scripts │                  15 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│      prerequest-scripts │                   1 │                  0 │
+├─────────────────────────┼─────────────────────┼────────────────────┤
+│              assertions │                  16 │                  0 │
+├─────────────────────────┴─────────────────────┴────────────────────┤
+│ total run duration: 4.6s                                           │
+├────────────────────────────────────────────────────────────────────┤
+│ total data received: 1.34kB (approx)                               │
+├────────────────────────────────────────────────────────────────────┤
+│ average response time: 212ms [min: 13ms, max: 1146ms, s.d.: 347ms] │
+└────────────────────────────────────────────────────────────────────┘
