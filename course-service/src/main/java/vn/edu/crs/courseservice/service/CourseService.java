@@ -1,97 +1,85 @@
-// path: course-service/src/main/java/vn/edu/crs/courseservice/service/CourseService.java
-// purpose: giu nguyen toan bo CRUD cua Buoi 2 (getAll/getById/create/update/delete),
-//          bo sung: search co phan trang + reserveSeat/releaseSeat (Buoi 3)
-//
-// LUU Y: Neu CourseService.java hien tai cua ban khac cac ten phuong thuc getAll/getById/
-// create/update/delete o duoi day, hay CHI COPY phan duoc danh dau "// ==== BUOI 3:" vao
-// cuoi class cua ban, giu nguyen phan con lai.
-
 package vn.edu.crs.courseservice.service;
 
-import vn.edu.crs.courseservice.dto.CourseDTO;
-import vn.edu.crs.courseservice.entity.Course;
-import vn.edu.crs.courseservice.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.crs.courseservice.dto.CourseDTO;
+import vn.edu.crs.courseservice.entity.Course;
+import vn.edu.crs.courseservice.repository.CourseRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CourseService {
 
     private final CourseRepository courseRepository;
 
-    // ==== BUOI 2: CRUD co ban (giu nguyen) ====
-
     public List<CourseDTO> getAll() {
-        return courseRepository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return courseRepository.findAll().stream().map(this::toDTO).toList();
+    }
+
+    public Page<CourseDTO> search(String keyword, Pageable pageable) {
+        Page<Course> courses = keyword == null || keyword.isBlank()
+                ? courseRepository.findAll(pageable)
+                : courseRepository.findByTenMonHocContainingIgnoreCase(keyword.trim(), pageable);
+        return courses.map(this::toDTO);
     }
 
     public CourseDTO getById(Long id) {
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Khong tim thay mon hoc id = " + id));
-        return toDTO(course);
+        return toDTO(findById(id));
     }
 
+    @Transactional
     public CourseDTO create(CourseDTO dto) {
-        if (courseRepository.existsByTenMonHocIgnoreCase(dto.getTenMonHoc())) {
-            throw new IllegalStateException("Mon hoc da ton tai: " + dto.getTenMonHoc());
+        String tenMonHoc = normalizeName(dto.getTenMonHoc());
+        if (courseRepository.existsByTenMonHocIgnoreCase(tenMonHoc)) {
+            throw new IllegalArgumentException("Ten mon hoc da ton tai");
         }
-        Course course = new Course();
-        course.setTenMonHoc(dto.getTenMonHoc());
-        course.setSoChoToiDa(dto.getSoChoToiDa());
-        course.setSoChoConLai(dto.getSoChoToiDa());
+
+        Course course = Course.builder()
+                .tenMonHoc(tenMonHoc)
+                .soTinChi(dto.getSoTinChi())
+                .soChoToiDa(dto.getSoChoToiDa())
+                .soChoConLai(dto.getSoChoToiDa())
+                .build();
         return toDTO(courseRepository.save(course));
     }
 
+    @Transactional
     public CourseDTO update(Long id, CourseDTO dto) {
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Khong tim thay mon hoc id = " + id));
-        course.setTenMonHoc(dto.getTenMonHoc());
+        Course course = findById(id);
+        String tenMonHoc = normalizeName(dto.getTenMonHoc());
+        if (courseRepository.existsByTenMonHocIgnoreCaseAndIdNot(tenMonHoc, id)) {
+            throw new IllegalArgumentException("Ten mon hoc da ton tai");
+        }
+        if (dto.getSoChoToiDa() < course.getSoChoConLai()) {
+            throw new IllegalArgumentException("So cho toi da khong duoc nho hon so cho con lai");
+        }
+
+        course.setTenMonHoc(tenMonHoc);
+        course.setSoTinChi(dto.getSoTinChi());
         course.setSoChoToiDa(dto.getSoChoToiDa());
+        // soChoConLai is only changed by reserve-seat/release-seat.
         return toDTO(courseRepository.save(course));
     }
 
+    @Transactional
     public void delete(Long id) {
         if (!courseRepository.existsById(id)) {
-            throw new NoSuchElementException("Khong tim thay mon hoc id = " + id);
+            throw notFound(id);
         }
         courseRepository.deleteById(id);
     }
 
-    private CourseDTO toDTO(Course course) {
-        CourseDTO dto = new CourseDTO();
-        dto.setId(course.getId());
-        dto.setTenMonHoc(course.getTenMonHoc());
-        dto.setSoChoToiDa(course.getSoChoToiDa());
-        dto.setSoChoConLai(course.getSoChoConLai());
-        return dto;
-    }
-
-    // ==== BUOI 3: search co phan trang ====
-
-    public Page<CourseDTO> search(String keyword, Pageable pageable) {
-        Page<Course> page = (keyword == null || keyword.isBlank())
-                ? courseRepository.findAll(pageable)
-                : courseRepository.findByTenMonHocContainingIgnoreCase(keyword, pageable);
-        return page.map(this::toDTO);
-    }
-
-    // ==== BUOI 3: reserve-seat / release-seat (API noi bo) ====
-
     @Transactional
     public CourseDTO reserveSeat(Long courseId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new NoSuchElementException("Khong tim thay mon hoc id = " + courseId));
-        if (course.getSoChoConLai() <= 0) {
+        Course course = findByIdForUpdate(courseId);
+        if (course.getSoChoConLai() == null || course.getSoChoConLai() <= 0) {
             throw new IllegalStateException("Mon hoc da het cho, khong the dang ky");
         }
         course.setSoChoConLai(course.getSoChoConLai() - 1);
@@ -100,11 +88,40 @@ public class CourseService {
 
     @Transactional
     public CourseDTO releaseSeat(Long courseId) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new NoSuchElementException("Khong tim thay mon hoc id = " + courseId));
+        Course course = findByIdForUpdate(courseId);
+        if (course.getSoChoConLai() == null) {
+            throw new IllegalStateException("Du lieu so cho con lai khong hop le");
+        }
         if (course.getSoChoConLai() < course.getSoChoToiDa()) {
             course.setSoChoConLai(course.getSoChoConLai() + 1);
+            course = courseRepository.save(course);
         }
-        return toDTO(courseRepository.save(course));
+        return toDTO(course);
+    }
+
+    private Course findById(Long id) {
+        return courseRepository.findById(id).orElseThrow(() -> notFound(id));
+    }
+
+    private Course findByIdForUpdate(Long id) {
+        return courseRepository.findByIdForUpdate(id).orElseThrow(() -> notFound(id));
+    }
+
+    private NoSuchElementException notFound(Long id) {
+        return new NoSuchElementException("Khong tim thay mon hoc id = " + id);
+    }
+
+    private String normalizeName(String tenMonHoc) {
+        return tenMonHoc == null ? null : tenMonHoc.trim();
+    }
+
+    private CourseDTO toDTO(Course course) {
+        return CourseDTO.builder()
+                .id(course.getId())
+                .tenMonHoc(course.getTenMonHoc())
+                .soTinChi(course.getSoTinChi())
+                .soChoToiDa(course.getSoChoToiDa())
+                .soChoConLai(course.getSoChoConLai())
+                .build();
     }
 }

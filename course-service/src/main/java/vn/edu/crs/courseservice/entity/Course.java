@@ -1,13 +1,21 @@
 package vn.edu.crs.courseservice.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "courses")
-@Data
+@Table(name = "course")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -17,18 +25,15 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Tên môn học không được để trống")
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "ten_mon_hoc", nullable = false, unique = true)
+    private String tenMonHoc;
 
-    private String description;
+    @Column(name = "so_tin_chi", nullable = false)
+    private Integer soTinChi;
 
-    @NotNull(message = "Số tín chỉ không được để trống")
-    private Integer credits;
+    @Column(name = "so_cho_toi_da", nullable = false)
+    private Integer soChoToiDa;
 
-    @Column(name = "so_cho_con_lai")
+    @Column(name = "so_cho_con_lai", nullable = false)
     private Integer soChoConLai;
-
-    @Column(name = "total_slots")
-    private Integer totalSlots;
 }

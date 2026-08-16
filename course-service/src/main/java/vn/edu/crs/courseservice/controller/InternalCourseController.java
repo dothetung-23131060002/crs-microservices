@@ -1,13 +1,12 @@
-// path: course-service/src/main/java/vn/edu/crs/courseservice/controller/InternalCourseController.java
-// purpose: controller rieng cho cac API noi bo, chi danh cho registration-service goi sang
-// (file MOI - them vao thu muc controller, khong ghi de file nao)
-
 package vn.edu.crs.courseservice.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import vn.edu.crs.courseservice.dto.CourseDTO;
 import vn.edu.crs.courseservice.service.CourseService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/internal/courses")
