@@ -16,7 +16,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   return (
     <div style={{ display: 'flex', gap: 6, marginTop: 16 }}>
       <button disabled={currentPage === 0} onClick={() => onPageChange(currentPage - 1)}>
-        « Trang truoc
+        « Trang trước
       </button>
 
       {pages.map((page) => (

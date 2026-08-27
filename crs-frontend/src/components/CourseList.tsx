@@ -12,29 +12,29 @@ interface CourseListProps {
 
 export default function CourseList({ courses, state, errorMessage, onRetry }: CourseListProps) {
   if (state === 'loading') {
-    return <p>Dang tai danh sach mon hoc...</p>;
+    return <p>Đang tải danh sách môn học...</p>;
   }
 
   if (state === 'error') {
     return (
       <div style={{ color: '#b91c1c' }}>
         <p>{errorMessage}</p>
-        <button onClick={onRetry}>Thu lai</button>
+        <button onClick={onRetry}>Thử lại</button>
       </div>
     );
   }
 
   if (state === 'empty') {
-    return <p>Khong tim thay mon hoc nao phu hop.</p>;
+    return <p>Không tìm thấy môn học nào phù hợp.</p>;
   }
 
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '2px solid #333' }}>
-          <th>Ten mon hoc</th>
-          <th>So tin chi</th>
-          <th>So cho con lai</th>
+          <th>Tên môn học</th>
+          <th>Số tín chỉ</th>
+          <th>Số chỗ còn lại</th>
         </tr>
       </thead>
       <tbody>

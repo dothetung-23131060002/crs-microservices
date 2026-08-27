@@ -27,14 +27,14 @@ export function useCourses(keyword: string, page: number, size = 10) {
       setTotalPages(data.totalPages);
       setState(data.content.length === 0 ? 'empty' : 'success');
     } catch (error) {
-      let message = 'Da xay ra loi khong xac dinh, vui long thu lai.';
+      let message = 'Đã xảy ra lỗi không xác định, vui lòng thử lại.';
 
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
         if (error.response?.data?.message) {
           message = error.response.data.message;
         } else if (!error.response) {
           // Khong nhan duoc response nao: Gateway hoac course-service co the dang tat.
-          message = 'Khong ket noi duoc toi he thong. Vui long thu lai sau.';
+          message = 'Không kết nối được tới hệ thống. Vui lòng thử lại sau.';
         }
       }
 

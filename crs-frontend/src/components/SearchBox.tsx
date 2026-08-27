@@ -23,7 +23,7 @@ export default function SearchBox({ onSearch, placeholder }: SearchBoxProps) {
       type="text"
       value={inputValue}
       onChange={(event) => setInputValue(event.target.value)}
-      placeholder={placeholder ?? 'Tim kiem theo ten mon hoc...'}
+      placeholder={placeholder ?? 'Tìm kiếm theo tên môn học...'}
       style={{
         width: '100%',
         maxWidth: 400,
