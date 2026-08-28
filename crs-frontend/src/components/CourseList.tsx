@@ -1,5 +1,6 @@
 // path: crs-frontend/src/components/CourseList.tsx
 // purpose: hien thi danh sach mon hoc, xu ly du 4 trang thai Loading/Success/Empty/Error
+// va cung cap thao tac Sua/Xoa tren tung dong
 import type { LoadState } from '../api/useCourses';
 import type { Course } from '../types/course';
 
@@ -8,9 +9,18 @@ interface CourseListProps {
   state: LoadState;
   errorMessage: string;
   onRetry: () => void;
+  onEdit: (course: Course) => void;
+  onDelete: (course: Course) => void;
 }
 
-export default function CourseList({ courses, state, errorMessage, onRetry }: CourseListProps) {
+export default function CourseList({
+  courses,
+  state,
+  errorMessage,
+  onRetry,
+  onEdit,
+  onDelete,
+}: CourseListProps) {
   if (state === 'loading') {
     return <p>Đang tải danh sách môn học...</p>;
   }
@@ -35,6 +45,7 @@ export default function CourseList({ courses, state, errorMessage, onRetry }: Co
           <th>Tên môn học</th>
           <th>Số tín chỉ</th>
           <th>Số chỗ còn lại</th>
+          <th>Thao tác</th>
         </tr>
       </thead>
       <tbody>
@@ -44,6 +55,15 @@ export default function CourseList({ courses, state, errorMessage, onRetry }: Co
             <td>{course.soTinChi}</td>
             <td style={{ color: course.soChoConLai === 0 ? '#b91c1c' : 'inherit' }}>
               {course.soChoConLai} / {course.soChoToiDa}
+            </td>
+            <td>
+              <button onClick={() => onEdit(course)}>Sửa</button>
+              <button
+                onClick={() => onDelete(course)}
+                style={{ marginLeft: 8, color: '#b91c1c' }}
+              >
+                Xoá
+              </button>
             </td>
           </tr>
         ))}

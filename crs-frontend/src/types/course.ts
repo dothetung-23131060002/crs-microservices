@@ -17,3 +17,17 @@ export interface PagedResponse<T> {
   number: number; // trang hien tai (bat dau tu 0)
   size: number;
 }
+
+// Kieu du lieu rieng cho form. Course co id va cac gia tri so, con form can giu
+// chuoi rong de controlled input co the bieu dien trang thai chua nhap.
+export interface CourseFormValues {
+  tenMonHoc: string;
+  soTinChi: string;
+  soChoToiDa: string;
+}
+
+export const emptyCourseForm: CourseFormValues = {
+  tenMonHoc: '',
+  soTinChi: '',
+  soChoToiDa: '',
+};
