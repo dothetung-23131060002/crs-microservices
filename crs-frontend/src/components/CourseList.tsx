@@ -9,8 +9,8 @@ interface CourseListProps {
   state: LoadState;
   errorMessage: string;
   onRetry: () => void;
-  onEdit: (course: Course) => void;
-  onDelete: (course: Course) => void;
+  onEdit?: (course: Course) => void;
+  onDelete?: (course: Course) => void;
 }
 
 export default function CourseList({
@@ -38,6 +38,8 @@ export default function CourseList({
     return <p>Không tìm thấy môn học nào phù hợp.</p>;
   }
 
+  const showActions = !!onEdit || !!onDelete;
+
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
@@ -45,7 +47,7 @@ export default function CourseList({
           <th>Tên môn học</th>
           <th>Số tín chỉ</th>
           <th>Số chỗ còn lại</th>
-          <th>Thao tác</th>
+          {showActions && <th>Thao tác</th>}
         </tr>
       </thead>
       <tbody>
@@ -56,15 +58,19 @@ export default function CourseList({
             <td style={{ color: course.soChoConLai === 0 ? '#b91c1c' : 'inherit' }}>
               {course.soChoConLai} / {course.soChoToiDa}
             </td>
-            <td>
-              <button onClick={() => onEdit(course)}>Sửa</button>
-              <button
-                onClick={() => onDelete(course)}
-                style={{ marginLeft: 8, color: '#b91c1c' }}
-              >
-                Xoá
-              </button>
-            </td>
+            {showActions && (
+              <td>
+                {onEdit && <button onClick={() => onEdit(course)}>Sửa</button>}
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(course)}
+                    style={{ marginLeft: 8, color: '#b91c1c' }}
+                  >
+                    Xoá
+                  </button>
+                )}
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

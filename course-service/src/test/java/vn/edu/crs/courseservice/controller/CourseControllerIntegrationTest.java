@@ -71,6 +71,12 @@ class CourseControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/courses")
+                        .header("Authorization", "Bearer chuoi-rac-buoi-08")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBody))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/courses")
                         .header("Authorization", bearerToken("student1", "STUDENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBody))
