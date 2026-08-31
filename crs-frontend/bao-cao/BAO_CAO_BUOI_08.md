@@ -16,13 +16,13 @@
 | `crs-frontend/src/components/Navbar.tsx` | Hiển thị menu, lời chào và nút đăng xuất theo role. |
 | `crs-frontend/src/components/CourseList.tsx` | Chuyển `onEdit`/`onDelete` thành optional và chỉ hiện cột thao tác khi có handler. |
 | `crs-frontend/playwright.config.ts` | Cấu hình Playwright chạy tuần tự, không retry, base URL `localhost:5173`. |
-| `crs-frontend/tests/buoi08.spec.ts` | Tự động hoá đủ 8 kịch bản, assertion HTTP/UI/localStorage, chụp ảnh và dọn dữ liệu CRUD tạm. |
+| `crs-frontend/tests/buoi08.spec.ts` | Tự động hoá đủ 8 kịch bản, assertion HTTP/UI/localStorage, mặc định lưu ảnh vào `bao-cao/screenshots/` đúng yêu cầu và dọn dữ liệu CRUD tạm; hỗ trợ biến `BUOI08_SCREENSHOTS_DIR` khi cần chạy kiểm tra không ghi đè bộ ảnh đã duyệt. |
 | `crs-frontend/eslint.config.js` | Cấu hình ESLint cho React + TypeScript. |
 | `crs-frontend/package.json`, `crs-frontend/package-lock.json` | Bổ sung Playwright, ESLint và script `lint`. |
 | `crs-frontend/.gitignore` | Bỏ qua output tạm `test-results` và `playwright-report`. |
 | `course-service/src/main/java/vn/edu/crs/courseservice/config/SecurityConfig.java` | Trả 401 cho request không xác thực/token hỏng; vẫn giữ 403 cho user đã xác thực nhưng sai role. |
 | `course-service/src/test/java/vn/edu/crs/courseservice/controller/CourseControllerIntegrationTest.java` | Bổ sung test hồi quy token rác phải nhận 401; test STUDENT nhận 403 vẫn được giữ. |
-| `crs-frontend/bao-cao/screenshots/*.png` | Ảnh trạng thái thật của từng kịch bản và các lỗi đã gặp trước khi sửa. |
+| `crs-frontend/bao-cao/screenshots/*.png` | Bộ ảnh đạt chụp toàn cửa sổ Google Chrome for Testing, có thanh địa chỉ và URL; kèm ảnh lỗi lịch sử đã chụp trước khi sửa. |
 | `crs-frontend/bao-cao/BAO_CAO_BUOI_08.md` | Báo cáo đối chiếu, kết quả test và trạng thái Git. |
 
 ## 2. Đối chiếu sản phẩm đầu ra cuối buổi
@@ -37,6 +37,8 @@
 - ☑ Git có commit `feat: routing + login via auth-service + interceptor + protected route` và đã push.
 
 ## 3. Kết quả 8 kịch bản
+
+Ngày 31/08/2026, toàn bộ 10 ảnh đạt bên dưới đã được chụp lại trong lúc Playwright điều khiển trình duyệt và đã được mở, kiểm tra trực quan từng ảnh. Mỗi ảnh có kích thước 1920×1030, chứa toàn bộ cửa sổ Google Chrome for Testing, thanh địa chỉ và URL đúng với kịch bản. Suite vẫn mặc định ghi vào `bao-cao/screenshots/` theo yêu cầu gốc; riêng lần chạy xác nhận cuối dùng `BUOI08_SCREENSHOTS_DIR=test-results/buoi08-page-screenshots` để ảnh viewport tự động không ghi đè bộ ảnh toàn cửa sổ đã duyệt. Các ảnh lỗi lịch sử ở mục 4 là ảnh viewport được giữ lại để chứng minh trạng thái trước khi sửa; chúng không được dùng làm bằng chứng URL.
 
 ### Kịch bản 1 — Chưa đăng nhập truy cập `/admin/courses`
 
@@ -105,25 +107,21 @@
 - Trạng thái thật: Maven `spring-boot:run` tạo classpath bị sai ký tự và báo `ClassNotFoundException`; Vite dev báo không load được `/src/main.tsx`, trang trắng.
 - Cách xử lý: ánh xạ repo tạm qua ổ `X:` có đường dẫn ASCII để chạy Maven; frontend được build rồi phục vụ bằng `vite preview` trên đúng `localhost:5173`.
 
-![Lỗi môi trường Vite đường dẫn Unicode](screenshots/00-loi-moi-truong-vite-duong-dan-unicode.png)
-
 ### 4.2. ProtectedRoute redirect trước khi AuthContext khôi phục phiên
 
 - Trạng thái thật: lần chạy đầu, case 4 chuyển Student về `/login` thay vì `/courses`; case 6 F5 admin cũng chuyển nhầm về `/login`.
 - Nguyên nhân: `ProtectedRoute` render trong khi `useEffect` khôi phục localStorage chưa chạy xong.
 - Cách xử lý: thêm cờ `isAuthReady` và chỉ render children sau khi đã đọc localStorage; chạy lại hai case và sau đó toàn bộ suite đều đạt.
 
-![Lỗi hydration ở case 4](screenshots/04-loi-hydration-chuyen-nham-login.png)
-
-![Lỗi hydration ở case 6](screenshots/06-loi-f5-chuyen-nham-login.png)
-
 ### 4.3. Token rác ban đầu nhận 403 thay vì 401
 
 - Trạng thái thật: request POST với token rác ban đầu nhận 403; frontend hiển thị lỗi quyền và không đăng xuất. Test vẫn giữ assertion 401, không nới sang 403.
 - Nguyên nhân: `JwtAuthFilter` xoá context khi parse token thất bại, sau đó Spring Security dùng response 403 mặc định cho request anonymous.
-- Cách xử lý: sau khi được cho phép mở rộng phạm vi, bổ sung `AuthenticationEntryPoint` trả 401 và test hồi quy. STUDENT đã xác thực nhưng sai role vẫn nhận 403.
-
-![Lỗi backend trả 403 trước khi sửa](screenshots/07-loi-backend-tra-403.png)
+- Xác nhận phạm vi: trước khi sửa backend, agent đã hỏi rõ quyền sửa tối thiểu `course-service/.../SecurityConfig.java`. Người dùng trả lời `Tôi cho phép bạn toàn quyền sử dụng`, sau đó yêu cầu tiếp tục sửa đến khi nhiệm vụ ban đầu hoàn thành 100%. Vì vậy câu “được cho phép mở rộng phạm vi” là đúng, không phải agent tự ghi nhận quyền.
+- Diff gốc trong commit `85207df...`: chỉ bổ sung `AuthenticationEntryPoint` trả 401 cho request chưa xác thực/token hỏng; các rule `hasRole("ADMIN")` không thay đổi.
+- Rà soát bổ sung ngày 31/08/2026: MockMvc trả đúng 403, nhưng probe HTTP runtime ban đầu cho STUDENT lại kết thúc ở 401. Log Spring Security chứng minh request đã được xác thực (`Authenticated=true`, `ROLE_STUDENT`) và `AccessDeniedHandler` đặt 403; sau đó `sendError` dispatch nội bộ tới `/error`, mất SecurityContext và bị `AuthenticationEntryPoint` ghi đè thành 401.
+- Cách xử lý cuối: giữ nguyên toàn bộ rule phân quyền và thêm `AccessDeniedHandler` dùng `response.setStatus(403)` để kết thúc trực tiếp nhánh đã xác thực nhưng sai role, không qua error dispatch. Đây chỉ là ánh xạ đúng mã trạng thái, không cấp thêm quyền cho bất kỳ role nào.
+- Kiểm tra hồi quy: cùng test `writesRequireAdminAndValidationErrorsAreJson` xác nhận token rác nhận 401 và JWT hợp lệ của `student1` với role `STUDENT` nhận 403. Chạy lại toàn bộ `course-service`: 10 test, 0 failure, 0 error, 0 skipped. Probe thật qua Gateway cuối cùng cũng trả đúng 401 cho token rác và 403 cho STUDENT đã xác thực.
 
 ### 4.4. Rule lint mới không phù hợp mẫu code bài lab
 
@@ -136,10 +134,14 @@
 - `npm run build`: **PASS**, TypeScript build và Vite production build thành công; 103 module được transform.
 - `npx playwright test`: **PASS**, 8/8 kịch bản đạt, 0 failed, `workers=1`, `retries=0`.
 - `course-service` Maven test: **PASS**, 10 test, 0 failure, 0 error, 0 skipped.
+- Probe HTTP thật qua Gateway: **PASS** — token rác trả 401; token do Auth Service cấp cho `student1` (`STUDENT`) khi gọi POST admin-only trả 403.
 - Kiểm tra dữ liệu sau Playwright: không còn course tạm có prefix `Buoi 08 Playwright` hoặc `Token rac`.
+- Kiểm tra ảnh toàn cửa sổ: **PASS**, đã mở trực tiếp 10/10 ảnh đạt; tất cả đều có thanh địa chỉ và đúng URL hiển thị.
 
 ## 6. Trạng thái Git commit/push
 
 - Feature commit: `85207df2f1bbc82c4884eba39330494d84def709` — `feat: routing + login via auth-service + interceptor + protected route`.
-- Push: **THÀNH CÔNG** — `origin/main` đã cập nhật từ `df91a7d` lên `85207df`.
-- File báo cáo được commit/push ở commit tài liệu tiếp theo để có thể ghi hash feature thật, không dùng placeholder.
+- Commit báo cáo: `37bb26a3129eabb862bda451715a2594e2e7b195` — `docs: add Buoi 8 verification report`.
+- Commit kiểm chứng bổ sung: `84f82ccd74893acb693e87b02a045824f5e2f7f6` — `fix: preserve 403 and add browser URL evidence`; chứa handler 403 runtime, 10 ảnh toàn cửa sổ và cơ chế giữ nguyên thư mục ảnh mặc định của Playwright.
+- `git log --oneline -5` hiển thị `37bb26a` ngay trên `85207df`; `git show 85207df... --stat` xác nhận feature commit có 33 file thay đổi, gồm đầy đủ frontend, Playwright/screenshots và đúng 2 file backend đã nêu ở mục 1.
+- Push: **THÀNH CÔNG** — `origin/main` đã cập nhật tới `84f82cc` và chứa cả `85207df...`, `37bb26a...`, `84f82cc...`; `git cat-file -e origin/main:crs-frontend/bao-cao/BAO_CAO_BUOI_08.md` thành công. Báo cáo không còn ở trạng thái “chưa commit/push”.
