@@ -2,7 +2,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 
-const screenshotsDir = path.resolve(process.cwd(), 'bao-cao', 'screenshots');
+const screenshotsDir = path.resolve(
+  process.cwd(),
+  process.env.BUOI08_SCREENSHOTS_DIR ?? path.join('bao-cao', 'screenshots'),
+);
 
 const failureScreenshotNames: Record<string, string> = {
   '01': '01-loi-chua-dang-nhap-vao-admin.png',
