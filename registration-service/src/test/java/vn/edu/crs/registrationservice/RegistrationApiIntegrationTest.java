@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,7 +75,7 @@ class RegistrationApiIntegrationTest {
     @Test
     void validJwtCanCreateRegistrationAfterRemoteReservation() throws Exception {
         mockMvc.perform(post("/registrations")
-                        .header("Authorization", bearerToken("student1", "STUDENT"))
+                        .header("Authorization", bearerToken(1L, "student1", "STUDENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"studentId\":1,\"courseId\":9}"))
                 .andExpect(status().isCreated())
@@ -91,9 +92,32 @@ class RegistrationApiIntegrationTest {
     }
 
     @Test
+    void getMyRegistrationsUsesStudentIdFromJwtCredentials() throws Exception {
+        registrationRepository.save(Registration.builder()
+                .studentId(1L)
+                .courseId(9L)
+                .trangThai(RegistrationService.DA_DANG_KY)
+                .ngayDangKy(LocalDateTime.now())
+                .build());
+        registrationRepository.save(Registration.builder()
+                .studentId(2L)
+                .courseId(10L)
+                .trangThai(RegistrationService.DA_DANG_KY)
+                .ngayDangKy(LocalDateTime.now())
+                .build());
+
+        mockMvc.perform(get("/registrations/my")
+                        .header("Authorization", bearerToken(1L, "student1", "STUDENT")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].studentId").value(1))
+                .andExpect(jsonPath("$[0].courseId").value(9));
+    }
+
+    @Test
     void validationErrorIsReturnedAsJsonAndDoesNotReserveSeat() throws Exception {
         mockMvc.perform(post("/registrations")
-                        .header("Authorization", bearerToken("student1", "STUDENT"))
+                        .header("Authorization", bearerToken(1L, "student1", "STUDENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"studentId\":1}"))
                 .andExpect(status().isBadRequest())
@@ -112,7 +136,7 @@ class RegistrationApiIntegrationTest {
                 .build());
 
         mockMvc.perform(post("/registrations")
-                        .header("Authorization", bearerToken("student1", "STUDENT"))
+                        .header("Authorization", bearerToken(1L, "student1", "STUDENT"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"studentId\":1,\"courseId\":9}"))
                 .andExpect(status().isConflict())
@@ -131,7 +155,7 @@ class RegistrationApiIntegrationTest {
                 .build());
 
         mockMvc.perform(delete("/registrations/{id}", registration.getId())
-                        .header("Authorization", bearerToken("admin", "ADMIN")))
+                        .header("Authorization", bearerToken(1L, "admin", "ADMIN")))
                 .andExpect(status().isOk());
 
         verify(courseClient).releaseSeat(9L);
@@ -141,12 +165,13 @@ class RegistrationApiIntegrationTest {
                 .isEqualTo(RegistrationService.DA_HUY);
     }
 
-    private String bearerToken(String username, String role) {
+    private String bearerToken(Long userId, String username, String role) {
         Date issuedAt = new Date();
         Date expiration = new Date(issuedAt.getTime() + 60_000L);
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         String token = Jwts.builder()
                 .setSubject(username)
+                .claim("userId", userId)
                 .claim("role", role)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiration)

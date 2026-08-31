@@ -13,6 +13,7 @@ import vn.edu.crs.registrationservice.exception.CourseServiceUnavailableExceptio
 import vn.edu.crs.registrationservice.repository.RegistrationRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -38,6 +39,16 @@ class RegistrationServiceTest {
 
     @InjectMocks
     private RegistrationService registrationService;
+
+    @Test
+    void getMyRegistrationsDelegatesToRepositoryWithStudentId() {
+        Registration registration = activeRegistration();
+        when(registrationRepository.findByStudentId(7L)).thenReturn(List.of(registration));
+
+        assertThat(registrationService.getMyRegistrations(7L)).containsExactly(registration);
+
+        verify(registrationRepository).findByStudentId(7L);
+    }
 
     @Test
     void registerReservesSeatBeforeSavingRegistration() {

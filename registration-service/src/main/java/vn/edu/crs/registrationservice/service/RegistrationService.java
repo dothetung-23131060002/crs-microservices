@@ -9,6 +9,7 @@ import vn.edu.crs.registrationservice.entity.Registration;
 import vn.edu.crs.registrationservice.repository.RegistrationRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -20,6 +21,10 @@ public class RegistrationService {
 
     private final RegistrationRepository registrationRepository;
     private final CourseClient courseClient;
+
+    public List<Registration> getMyRegistrations(Long studentId) {
+        return registrationRepository.findByStudentId(studentId);
+    }
 
     @Transactional
     public Registration register(RegistrationRequestDTO dto) {
