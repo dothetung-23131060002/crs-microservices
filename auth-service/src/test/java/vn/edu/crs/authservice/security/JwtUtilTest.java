@@ -14,10 +14,11 @@ class JwtUtilTest {
     void generatedTokenContainsExpectedClaimsAndExpiration() {
         JwtUtil jwtUtil = new JwtUtil(SECRET, 60_000);
 
-        String token = jwtUtil.generateToken("student1", "STUDENT");
+        String token = jwtUtil.generateToken(2L, "student1", "STUDENT");
         Claims claims = jwtUtil.parseClaims(token);
 
         assertThat(claims.getSubject()).isEqualTo("student1");
+        assertThat(claims.get("userId", Long.class)).isEqualTo(2L);
         assertThat(claims.get("role", String.class)).isEqualTo("STUDENT");
         assertThat(claims.getIssuedAt()).isBeforeOrEqualTo(claims.getExpiration());
         assertThat(claims.getExpiration().getTime() - claims.getIssuedAt().getTime())
@@ -31,7 +32,7 @@ class JwtUtilTest {
         JwtUtil verifier = new JwtUtil(
                 "Another-CRS-Microservices-Secret-Key-With-At-Least-32-Bytes", 60_000);
 
-        String token = issuer.generateToken("admin", "ADMIN");
+        String token = issuer.generateToken(1L, "admin", "ADMIN");
 
         assertThat(verifier.isTokenValid(token)).isFalse();
     }

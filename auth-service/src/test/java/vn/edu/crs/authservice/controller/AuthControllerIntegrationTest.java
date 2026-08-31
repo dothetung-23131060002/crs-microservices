@@ -39,6 +39,7 @@ class AuthControllerIntegrationTest {
                                 {"username":"admin","password":"admin123"}
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").isNumber())
                 .andExpect(jsonPath("$.username").value("admin"))
                 .andExpect(jsonPath("$.role").value("ADMIN"))
                 .andExpect(jsonPath("$.token").isNotEmpty())
@@ -48,6 +49,8 @@ class AuthControllerIntegrationTest {
         String token = body.get("token").asText();
 
         assertThat(jwtUtil.isTokenValid(token)).isTrue();
+        assertThat(jwtUtil.parseClaims(token).get("userId", Long.class))
+                .isEqualTo(body.get("userId").asLong());
         assertThat(jwtUtil.extractUsername(token)).isEqualTo("admin");
         assertThat(jwtUtil.extractRole(token)).isEqualTo("ADMIN");
     }
@@ -60,6 +63,7 @@ class AuthControllerIntegrationTest {
                                 {"username":"student1","password":"student123"}
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").isNumber())
                 .andExpect(jsonPath("$.username").value("student1"))
                 .andExpect(jsonPath("$.role").value("STUDENT"))
                 .andExpect(jsonPath("$.token").isNotEmpty());
