@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Buổi 10 - Postman Security Review</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 32px auto; color: #1f2937; }
+    h1 { color: #0f4c81; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    th, td { border: 1px solid #9ca3af; padding: 9px; text-align: left; vertical-align: top; }
+    th { background: #e8f1f8; }
+    .pass { color: #137333; font-weight: 700; }
+    figure { margin: 28px 0; page-break-inside: avoid; }
+    img { max-width: 100%; border: 1px solid #9ca3af; }
+    figcaption { margin-top: 6px; font-weight: 700; }
+    code { font-family: Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Buổi 10 - Rà soát bảo mật bằng Postman</h1>
+  <p>Ngày chạy: 01/09/2026. Thông tin đăng nhập, JWT và API Key không được ghi vào báo cáo này.</p>
+  <table>
+    <thead><tr><th>#</th><th>Kịch bản</th><th>Kỳ vọng</th><th>Thực tế</th><th>Kết quả</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>POST <code>/api/registrations</code> không token</td><td>401</td><td>401 Unauthorized</td><td class="pass">Đạt</td></tr>
+      <tr><td>2</td><td>STUDENT POST <code>/api/courses</code></td><td>403</td><td>403 Forbidden</td><td class="pass">Đạt</td></tr>
+      <tr><td>3</td><td>ADMIN POST <code>/api/courses</code></td><td>201</td><td>201 Created</td><td class="pass">Đạt</td></tr>
+      <tr><td>4</td><td>JWT bị sửa ký tự trong phần chữ ký gọi <code>/api/registrations/my</code></td><td>401</td><td>401 Unauthorized</td><td class="pass">Đạt</td></tr>
+      <tr><td>5</td><td>GET <code>/api/public/courses</code> không X-API-KEY</td><td>403</td><td>403 Forbidden</td><td class="pass">Đạt</td></tr>
+      <tr><td>6</td><td>GET <code>/api/public/courses</code> với X-API-KEY đúng</td><td>200</td><td>200 OK</td><td class="pass">Đạt</td></tr>
+      <tr><td>7</td><td>Gọi thẳng <code>PATCH http://localhost:8082/internal/courses/49/reserve-seat</code>, bỏ qua Gateway</td><td>200</td><td>200 OK, số chỗ 5 xuống 4</td><td class="pass">Đạt</td></tr>
+    </tbody>
+  </table>
+  <p>Ca 7 dùng PATCH vì đây là method thực tế được khai báo bởi <code>@PatchMapping</code> và được <code>CourseClient</code> sử dụng. Việc gọi thẳng vẫn thành công là giới hạn đã biết của thiết kế Buổi 4; endpoint nội bộ dựa vào việc Gateway không định tuyến ra ngoài, không dựa vào xác thực riêng.</p>
+
+  <figure><img src="screenshots/d1-no-token-401.png" alt="D1 401"><figcaption>D1 - Không token: 401</figcaption></figure>
+  <figure><img src="screenshots/d2-student-admin-api-403.png" alt="D2 403"><figcaption>D2 - STUDENT gọi API ADMIN: 403</figcaption></figure>
+  <figure><img src="screenshots/d3-admin-create-201.png" alt="D3 201"><figcaption>D3 - ADMIN tạo môn: 201</figcaption></figure>
+  <figure><img src="screenshots/d4-tampered-jwt-401.png" alt="D4 401"><figcaption>D4 - JWT giả mạo: 401</figcaption></figure>
+  <figure><img src="screenshots/d5-public-no-api-key-403.png" alt="D5 403"><figcaption>D5 - Thiếu API Key: 403</figcaption></figure>
+  <figure><img src="screenshots/d6-public-valid-api-key-200.png" alt="D6 200"><figcaption>D6 - API Key hợp lệ: 200</figcaption></figure>
+  <figure><img src="screenshots/d7-direct-internal-200.png" alt="D7 200"><figcaption>D7 - Gọi thẳng endpoint nội bộ: 200</figcaption></figure>
+</body>
+</html>

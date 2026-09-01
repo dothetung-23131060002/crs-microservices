@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import vn.edu.crs.registrationservice.client.CourseClient;
 import vn.edu.crs.registrationservice.dto.RegistrationRequestDTO;
 import vn.edu.crs.registrationservice.entity.Registration;
-import vn.edu.crs.registrationservice.exception.CourseServiceUnavailableException;
 import vn.edu.crs.registrationservice.repository.RegistrationRepository;
 
 import java.time.LocalDateTime;
@@ -126,11 +125,11 @@ class RegistrationServiceTest {
     void cancelKeepsActiveStateWhenCourseServiceIsUnavailable() {
         Registration registration = activeRegistration();
         when(registrationRepository.findById(23L)).thenReturn(Optional.of(registration));
-        doThrow(new CourseServiceUnavailableException("unavailable", new RuntimeException()))
+        doThrow(new IllegalStateException("unavailable", new RuntimeException()))
                 .when(courseClient).releaseSeat(11L);
 
         assertThatThrownBy(() -> registrationService.cancel(23L))
-                .isInstanceOf(CourseServiceUnavailableException.class);
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(registration.getTrangThai()).isEqualTo(RegistrationService.DA_DANG_KY);
         verify(registrationRepository, never()).save(any());

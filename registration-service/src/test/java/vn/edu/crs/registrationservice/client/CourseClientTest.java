@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-import vn.edu.crs.registrationservice.exception.CourseServiceUnavailableException;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -82,19 +81,19 @@ class CourseClientTest {
     }
 
     @Test
-    void serverErrorProducesExplicitUnavailableException() {
+    void serverErrorProducesBusinessConflict() {
         server.expect(once(), requestTo("http://course-service:8082/internal/courses/12/reserve-seat"))
                 .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
         assertThatThrownBy(() -> courseClient.reserveSeat(12L))
-                .isInstanceOf(CourseServiceUnavailableException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Khong the ket noi toi course-service, vui long thu lai sau");
 
         server.verify();
     }
 
     @Test
-    void connectionFailureProducesExplicitUnavailableException() {
+    void connectionFailureProducesBusinessConflict() {
         RestTemplate unavailableRestTemplate = mock(RestTemplate.class);
         CourseClient unavailableClient = new CourseClient(unavailableRestTemplate, "http://localhost:8082");
         when(unavailableRestTemplate.exchange(
@@ -102,7 +101,7 @@ class CourseClientTest {
                 .thenThrow(new ResourceAccessException("Connection refused"));
 
         assertThatThrownBy(() -> unavailableClient.reserveSeat(12L))
-                .isInstanceOf(CourseServiceUnavailableException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Khong the ket noi toi course-service, vui long thu lai sau");
     }
 }

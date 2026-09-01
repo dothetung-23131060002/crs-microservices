@@ -9,7 +9,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import vn.edu.crs.registrationservice.exception.CourseServiceUnavailableException;
 
 @Component
 public class CourseClient {
@@ -38,9 +37,9 @@ public class CourseClient {
         } catch (HttpClientErrorException exception) {
             throw new IllegalStateException("Course-service tu choi yeu cau dat cho", exception);
         } catch (HttpServerErrorException | ResourceAccessException exception) {
-            throw new CourseServiceUnavailableException(UNAVAILABLE_MESSAGE, exception);
+            throw new IllegalStateException(UNAVAILABLE_MESSAGE, exception);
         } catch (RestClientException exception) {
-            throw new CourseServiceUnavailableException(UNAVAILABLE_MESSAGE, exception);
+            throw new IllegalStateException(UNAVAILABLE_MESSAGE, exception);
         }
     }
 
@@ -53,9 +52,9 @@ public class CourseClient {
         } catch (HttpClientErrorException exception) {
             throw new IllegalStateException("Course-service tu choi yeu cau hoan cho", exception);
         } catch (HttpServerErrorException | ResourceAccessException exception) {
-            throw new CourseServiceUnavailableException(UNAVAILABLE_MESSAGE, exception);
+            throw new IllegalStateException(UNAVAILABLE_MESSAGE, exception);
         } catch (RestClientException exception) {
-            throw new CourseServiceUnavailableException(UNAVAILABLE_MESSAGE, exception);
+            throw new IllegalStateException(UNAVAILABLE_MESSAGE, exception);
         }
     }
 

@@ -23,12 +23,6 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage());
     }
 
-    @ExceptionHandler(CourseServiceUnavailableException.class)
-    public ResponseEntity<Map<String, String>> handleCourseServiceUnavailable(
-            CourseServiceUnavailableException exception) {
-        return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new LinkedHashMap<>();
