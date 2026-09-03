@@ -11,6 +11,14 @@ spring:
           filters:
             - RewritePath=/api/auth/(?<segment>.*), /auth/$\{segment}
 
+        - id: auth-service-apikeys
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/api-keys,/api/api-keys/**
+          filters:
+            - RewritePath=/api/api-keys/(?<segment>.*), /api-keys/$\{segment}
+            - RewritePath=/api/api-keys, /api-keys
+
         - id: course-service-list
           uri: ${COURSE_SERVICE_URL:http://localhost:8082}
           predicates:
@@ -60,9 +68,6 @@ server:
 
 jwt:
   secret: ${JWT_SECRET:CRS-Microservices-Secret-Key-Nam-3-Hoc-Ky-2026-Doi-Trong-Thuc-Te}
-
-partner:
-  api-key: ${PARTNER_API_KEY:crs-partner-key-2026}
 
 management:
   endpoints:
